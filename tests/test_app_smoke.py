@@ -1,10 +1,12 @@
-"""tests/test_app_smoke.py — Smoke and AST tests for app.py and cli.py (P4/P5).
+"""tests/test_app_smoke.py — Smoke and AST tests for app.py and cli.py (P4/P5/P8).
 
 Tests verify:
 - app.py is importable without executing main()
 - app.py AST contains def main() and references all 8 TABS class names + st.tabs(
 - cli.py is importable and main() accepts an argv list without launching streamlit
 - cli.py main(["--help"]) returns an int (subprocess is monkeypatched)
+- Phase 8: app.py references save_snapshot, load_snapshot, list_snapshots,
+  render_compare_2way, render_compare_nway and contains a Mode radio
 """
 
 from __future__ import annotations
@@ -32,6 +34,15 @@ _EXPECTED_TAB_CLASSES = [
     "AutoresearchTab",
     "CurriculumTab",
     "PipelineHealthTab",
+]
+
+# Phase 8 symbols that must appear in app.py
+_P8_SYMBOLS = [
+    "save_snapshot",
+    "load_snapshot",
+    "list_snapshots",
+    "render_compare_2way",
+    "render_compare_nway",
 ]
 
 
@@ -85,6 +96,41 @@ class TestAppAST:
     def test_import_for_report(self, app_source: str):
         """app.py must import export_report from report module."""
         assert "from lerobot_isaac_dashboard.report import export_report" in app_source
+
+    # ------------------------------------------------------------------
+    # Phase 8 checks
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize("symbol", _P8_SYMBOLS)
+    def test_references_p8_symbol(self, app_source: str, symbol: str):
+        """app.py must reference each P8 snapshot/compare symbol."""
+        assert symbol in app_source, (
+            f"app.py must reference P8 symbol '{symbol}'"
+        )
+
+    def test_has_mode_radio(self, app_source: str):
+        """app.py sidebar must contain a 'Mode' radio widget."""
+        assert '"Mode"' in app_source or "'Mode'" in app_source, (
+            "app.py must include a 'Mode' radio widget in the sidebar (P8)"
+        )
+
+    def test_references_compare_2way_mode(self, app_source: str):
+        """app.py must reference the Compare (2-way) mode string."""
+        assert "Compare (2-way)" in app_source, (
+            "app.py must contain 'Compare (2-way)' mode string"
+        )
+
+    def test_references_compare_nway_mode(self, app_source: str):
+        """app.py must reference the Compare (N-way) mode string."""
+        assert "Compare (N-way)" in app_source, (
+            "app.py must contain 'Compare (N-way)' mode string"
+        )
+
+    def test_has_save_snapshot_button(self, app_source: str):
+        """app.py must have a Save snapshot button."""
+        assert "Save snapshot" in app_source, (
+            "app.py must include a 'Save snapshot' button"
+        )
 
 
 # ---------------------------------------------------------------------------

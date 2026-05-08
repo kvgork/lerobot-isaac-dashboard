@@ -5,8 +5,8 @@ figures used by the live Streamlit dashboard.
 
 CLI::
 
-    python -m lerobot_isaac_dashboard.report --workspace=PATH [--session-id=SID] [--cdn] [--with-csv]
-    lerobot-isaac-report --workspace=PATH [--session-id=SID] [--cdn] [--with-csv]
+    python -m lerobot_isaac_dashboard.report --workspace=PATH [--session-id=SID] [--cdn] [--with-csv] [--no-snapshot]
+    lerobot-isaac-report --workspace=PATH [--session-id=SID] [--cdn] [--with-csv] [--no-snapshot]
 
 API::
 
@@ -123,6 +123,7 @@ def export_report(
     run_id: str | None = None,
     inline_plotlyjs: bool = True,
     with_csv: bool = False,
+    with_snapshot: bool = True,
 ) -> Path:
     """Render all 8 tabs to a single self-contained HTML file.
 
@@ -146,6 +147,9 @@ def export_report(
     with_csv:
         When ``True``, write ``data/<slug>.csv`` dumps next to the report for
         each loader whose result is non-empty.
+    with_snapshot:
+        When ``True`` (default), automatically save a snapshot of the loader
+        state alongside the report.  Pass ``False`` to skip snapshot creation.
 
     Returns
     -------
@@ -166,7 +170,7 @@ def export_report(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # ------------------------------------------------------------------
-    # 1. Run all loaders headless
+    # 1. Run all loaders headless (capture state once — shared by HTML and snapshot)
     # ------------------------------------------------------------------
     loader_results = run_loaders_headless(workspace_root, session_id=session_id)
 
@@ -222,13 +226,32 @@ def export_report(
     logger.info("Report written: %s", report_path)
 
     # ------------------------------------------------------------------
-    # 7. Write manifest.json
+    # 7. Auto-save snapshot (default ON; --no-snapshot opts out)
+    # ------------------------------------------------------------------
+    snapshot_path: str | None = None
+    if with_snapshot:
+        try:
+            from lerobot_isaac_dashboard.snapshots import _make_snapshot_id, save_snapshot
+
+            snap_dir = save_snapshot(
+                workspace_root,
+                session_id=session_id,
+                label=run_id,
+            )
+            snapshot_path = str(snap_dir)
+            logger.info("Auto-snapshot saved: %s", snap_dir)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Auto-snapshot failed (non-fatal): %s", exc)
+
+    # ------------------------------------------------------------------
+    # 8. Write manifest.json
     # ------------------------------------------------------------------
     manifest = {
         "run_id": run_id,
         "workspace_root": str(workspace_root),
         "session_id": session_id,
         "generated_at": generated_at.isoformat(),
+        "snapshot_path": snapshot_path,
         "tabs": [
             {
                 "slug": t.slug,
@@ -244,7 +267,7 @@ def export_report(
     logger.info("Manifest written: %s", manifest_path)
 
     # ------------------------------------------------------------------
-    # 8. Optional CSV dumps
+    # 9. Optional CSV dumps
     # ------------------------------------------------------------------
     if with_csv:
         _write_csv_dumps(output_dir, loader_results)
@@ -333,7 +356,7 @@ def cli_main(argv: list[str] | None = None) -> int:
 
     Usage::
 
-        lerobot-isaac-report --workspace=PATH [--session-id=SID] [--cdn] [--with-csv]
+        lerobot-isaac-report --workspace=PATH [--session-id=SID] [--cdn] [--with-csv] [--no-snapshot]
         python -m lerobot_isaac_dashboard.report --workspace=PATH
 
     Returns 0 on success, 1 on error.
@@ -379,6 +402,12 @@ def cli_main(argv: list[str] | None = None) -> int:
         help="Also write per-loader CSV dumps under <output_dir>/data/.",
     )
     parser.add_argument(
+        "--no-snapshot",
+        action="store_true",
+        default=False,
+        help="Disable the automatic snapshot saved alongside the report.",
+    )
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         default=False,
@@ -403,6 +432,7 @@ def cli_main(argv: list[str] | None = None) -> int:
             run_id=args.run_id,
             inline_plotlyjs=not args.cdn,
             with_csv=args.with_csv,
+            with_snapshot=not args.no_snapshot,
         )
         print(f"Report written: {report_path}")
         return 0

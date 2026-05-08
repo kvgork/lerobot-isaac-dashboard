@@ -6,8 +6,14 @@ Run via the console script or directly::
     lerobot-isaac-dashboard --workspace=PATH
 
 All sidebar controls (workspace path, session selector, refresh interval,
-watchdog toggle, export button) live here.  Tab rendering is delegated to
-the TABS registry from :mod:`lerobot_isaac_dashboard.tabs`.
+watchdog toggle, mode radio, snapshot panel, compare panel) live here.
+Tab rendering is delegated to the TABS registry from
+:mod:`lerobot_isaac_dashboard.tabs`.
+
+Phase 8 additions:
+- Mode radio: Live | Compare (2-way) | Compare (N-way)
+- Save snapshot button in sidebar
+- Compare mode renders snapshots via compare.py helpers
 """
 
 from __future__ import annotations
@@ -55,6 +61,8 @@ from lerobot_isaac_dashboard.tabs import (
     TabContext,
     WorldModelTab,
 )
+from lerobot_isaac_dashboard.snapshots import save_snapshot, load_snapshot, list_snapshots
+from lerobot_isaac_dashboard.compare import render_compare_2way, render_compare_nway
 
 # ---------------------------------------------------------------------------
 # Loader registry
@@ -259,58 +267,176 @@ def main() -> None:
 
         st.divider()
 
-        # Refresh interval
-        refresh_s: int = st.slider(
-            "Refresh interval (s)",
-            min_value=0,
-            max_value=120,
-            value=30,
-            step=5,
-            help="Set to 0 to disable auto-refresh.",
-            key="refresh_interval_s",
-        )
-
-        # Watchdog toggle
-        watchdog_on: bool = st.checkbox(
-            "Watch files",
-            value=False,
-            help=(
-                "Enable file-system watcher on outputs/, .agent-state/, datasets/. "
-                "Triggers a rerun whenever files change. Reduces idle CPU vs timer."
-            ),
-            key="watchdog_enabled",
+        # ------------------------------------------------------------------
+        # Mode toggle (P8)
+        # ------------------------------------------------------------------
+        mode = st.radio(
+            "Mode",
+            ["Live", "Compare (2-way)", "Compare (N-way)"],
+            index=0,
+            key="dashboard_mode",
         )
 
         st.divider()
 
-        # Export button
-        export_clicked: bool = st.button(
-            "Export static report",
-            help="Generate a static HTML report — single self-contained file.",
-            key="export_button",
-        )
+        if mode == "Live":
+            # Refresh interval
+            refresh_s: int = st.slider(
+                "Refresh interval (s)",
+                min_value=0,
+                max_value=120,
+                value=30,
+                step=5,
+                help="Set to 0 to disable auto-refresh.",
+                key="refresh_interval_s",
+            )
+
+            # Watchdog toggle
+            watchdog_on: bool = st.checkbox(
+                "Watch files",
+                value=False,
+                help=(
+                    "Enable file-system watcher on outputs/, .agent-state/, datasets/. "
+                    "Triggers a rerun whenever files change. Reduces idle CPU vs timer."
+                ),
+                key="watchdog_enabled",
+            )
+
+            st.divider()
+
+            # Export button
+            export_clicked: bool = st.button(
+                "Export static report",
+                help="Generate a static HTML report — single self-contained file.",
+                key="export_button",
+            )
+
+            st.markdown("---")
+
+            # Save snapshot panel (P8)
+            st.markdown("**Save snapshot**")
+            snap_label = st.text_input(
+                "Snapshot label",
+                value="",
+                key="snapshot_label_input",
+                placeholder="e.g. baseline",
+            )
+            snap_clicked: bool = st.button(
+                "Save snapshot",
+                key="save_snapshot_button",
+            )
+
+        else:
+            # Compare mode — snapshot selector
+            refresh_s = 30
+            watchdog_on = False
+            export_clicked = False
+            snap_clicked = False
+            snap_label = ""
+
+            snaps = list_snapshots(workspace_root)
+            snap_ids = [s.snapshot_id for s in snaps]
+            snap_labels_map = {s.snapshot_id: (s.label or s.snapshot_id) for s in snaps}
+
+            if not snap_ids:
+                st.warning("No snapshots found. Save one first via Live mode.")
+                compare_snap_ids: list[str] = []
+            elif mode == "Compare (2-way)":
+                st.markdown("**Select snapshots**")
+                a_id = st.selectbox(
+                    "Snapshot A",
+                    snap_ids,
+                    index=0,
+                    format_func=lambda x: snap_labels_map.get(x, x),
+                    key="compare_snap_a",
+                )
+                b_id = st.selectbox(
+                    "Snapshot B",
+                    snap_ids,
+                    index=min(1, len(snap_ids) - 1),
+                    format_func=lambda x: snap_labels_map.get(x, x),
+                    key="compare_snap_b",
+                )
+                compare_snap_ids = [a_id, b_id]
+            else:  # N-way
+                st.markdown("**Select snapshots (2+)**")
+                default_sel = snap_ids[:3] if len(snap_ids) >= 3 else snap_ids
+                compare_snap_ids = st.multiselect(
+                    "Snapshots",
+                    snap_ids,
+                    default=default_sel,
+                    format_func=lambda x: snap_labels_map.get(x, x),
+                    key="compare_snap_nway",
+                )
 
     # ------------------------------------------------------------------
-    # 4. Auto-refresh
+    # 4. Auto-refresh (Live mode only)
     # ------------------------------------------------------------------
-    if refresh_s > 0:
+    if mode == "Live" and refresh_s > 0:
         register_autorefresh(refresh_s * 1000)
 
     # ------------------------------------------------------------------
-    # 5. Watchdog
+    # 5. Watchdog (Live mode only)
     # ------------------------------------------------------------------
-    if watchdog_on:
+    if mode == "Live" and watchdog_on:
         register_watchdog(workspace_root)
 
     # ------------------------------------------------------------------
-    # 6. Load all data (cached, mtime-keyed)
+    # 6. Handle Save Snapshot click (Live mode)
     # ------------------------------------------------------------------
+    if mode == "Live" and snap_clicked:
+        try:
+            with st.spinner("Saving snapshot…"):
+                snap_dir = save_snapshot(
+                    workspace_root,
+                    session_id=session_id,
+                    label=snap_label or None,
+                )
+            st.sidebar.success(f"Saved {snap_dir.name}")
+        except Exception as exc:  # noqa: BLE001
+            st.sidebar.error(f"Snapshot failed: {exc}")
+            logger.exception("Save snapshot failed")
+
+    # ------------------------------------------------------------------
+    # 7. Route by mode
+    # ------------------------------------------------------------------
+    if mode == "Live":
+        _render_live_mode(
+            workspace_root=workspace_root,
+            session_id=session_id,
+            refresh_s=refresh_s,
+            export_clicked=export_clicked,
+        )
+    elif mode == "Compare (2-way)":
+        _render_compare_2way_mode(
+            workspace_root=workspace_root,
+            snap_ids=compare_snap_ids,
+        )
+    else:
+        _render_compare_nway_mode(
+            workspace_root=workspace_root,
+            snap_ids=compare_snap_ids,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Mode renderers
+# ---------------------------------------------------------------------------
+
+def _render_live_mode(
+    workspace_root: Path,
+    session_id: str | None,
+    refresh_s: int,
+    export_clicked: bool,
+) -> None:
+    """Render the standard single-run live dashboard."""
+    import streamlit as st
+
+    # Load all data (cached, mtime-keyed)
     mtime = _mtime_tuple(workspace_root, session_id)
     loader_results = _get_cached_loaders(workspace_root, session_id, refresh_s, mtime)
 
-    # ------------------------------------------------------------------
-    # 7. Build TabContext
-    # ------------------------------------------------------------------
+    # Build TabContext
     ctx = TabContext(
         workspace_root=workspace_root,
         session_id=session_id,
@@ -318,16 +444,12 @@ def main() -> None:
         refresh_ts=datetime.utcnow(),
     )
 
-    # ------------------------------------------------------------------
-    # 8. KPI banner (renders before tabs, survives tab switching)
-    # ------------------------------------------------------------------
+    # KPI banner
     from lerobot_isaac_dashboard.tabs._kpis import render_kpi_row
 
     render_kpi_row(ctx)
 
-    # ------------------------------------------------------------------
-    # 9. Tab routing
-    # ------------------------------------------------------------------
+    # Tab routing
     tab_titles = [tab_cls.title for tab_cls in TABS]
     tab_containers = st.tabs(tab_titles)
 
@@ -339,9 +461,7 @@ def main() -> None:
                 st.error(f"Tab '{tab_cls.title}' raised: {exc}")
                 logger.exception("Tab %r failed", tab_cls.title)
 
-    # ------------------------------------------------------------------
-    # 10. Export button handler (P5 — wired to report.export_report)
-    # ------------------------------------------------------------------
+    # Export button handler
     if export_clicked:
         try:
             from lerobot_isaac_dashboard.report import export_report
@@ -364,14 +484,73 @@ def main() -> None:
             st.exception(exc)
             logger.exception("Export failed")
 
-    # ------------------------------------------------------------------
     # Footer
-    # ------------------------------------------------------------------
     st.divider()
     st.caption(
         f"Last refresh: {ctx.refresh_ts.strftime('%Y-%m-%d %H:%M:%S UTC')} "
         f"| Workspace: {workspace_root}"
     )
+
+
+def _render_compare_2way_mode(
+    workspace_root: Path,
+    snap_ids: list[str],
+) -> None:
+    """Render the 2-way side-by-side comparison."""
+    import streamlit as st
+
+    if len(snap_ids) < 2:
+        st.warning("Select two snapshots in the sidebar to compare.")
+        return
+
+    try:
+        snap_a = load_snapshot(snap_ids[0], workspace_root=workspace_root)
+        snap_b = load_snapshot(snap_ids[1], workspace_root=workspace_root)
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Could not load snapshots: {exc}")
+        return
+
+    meta_a, _ = snap_a
+    meta_b, _ = snap_b
+    label_a = meta_a.label or meta_a.snapshot_id
+    label_b = meta_b.label or meta_b.snapshot_id
+
+    st.header(f"Compare: {label_a}  vs  {label_b}")
+
+    render_compare_2way(snap_a, snap_b, container=st.container())
+
+
+def _render_compare_nway_mode(
+    workspace_root: Path,
+    snap_ids: list[str],
+) -> None:
+    """Render the N-way overlay comparison."""
+    import streamlit as st
+
+    if len(snap_ids) < 2:
+        st.warning("Select at least two snapshots in the sidebar to compare.")
+        return
+
+    loaded = []
+    errors = []
+    for sid in snap_ids:
+        try:
+            loaded.append(load_snapshot(sid, workspace_root=workspace_root))
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{sid}: {exc}")
+
+    if errors:
+        for err in errors:
+            st.warning(f"Skipped snapshot: {err}")
+
+    if len(loaded) < 2:
+        st.error("Not enough valid snapshots to compare.")
+        return
+
+    labels = [(m.label or m.snapshot_id) for (m, _) in loaded]
+    st.header(f"N-way Overlay: {' | '.join(labels)}")
+
+    render_compare_nway(loaded, container=st.container())
 
 
 if __name__ == "__main__":

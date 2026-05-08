@@ -22,8 +22,10 @@ all = ["lerobot", "stable-worldmodel"]
 monorepo = ["lerobot-isaac-meta", "lerobot-isaac-configs"]
 
 [project.scripts]
-lerobot-isaac-dashboard = "lerobot_isaac_dashboard.cli:main"
-lerobot-isaac-report   = "lerobot_isaac_dashboard.report:cli_main"
+lerobot-isaac-dashboard  = "lerobot_isaac_dashboard.cli:main"
+lerobot-isaac-report     = "lerobot_isaac_dashboard.report:cli_main"
+lerobot-isaac-snapshot   = "lerobot_isaac_dashboard.snapshots:cli_main"
+lerobot-isaac-compare    = "lerobot_isaac_dashboard.compare:cli_main"
 
 [build-system]
 requires = ["hatchling"]
