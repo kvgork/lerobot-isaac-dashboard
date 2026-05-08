@@ -286,7 +286,7 @@ def main() -> None:
         # Export button
         export_clicked: bool = st.button(
             "Export static report",
-            help="Generate a static HTML report (requires Phase 5 — report.py).",
+            help="Generate a static HTML report — single self-contained file.",
             key="export_button",
         )
 
@@ -340,32 +340,28 @@ def main() -> None:
                 logger.exception("Tab %r failed", tab_cls.title)
 
     # ------------------------------------------------------------------
-    # 10. Export button handler
+    # 10. Export button handler (P5 — wired to report.export_report)
     # ------------------------------------------------------------------
     if export_clicked:
-        # TODO(P5): wire export_report once report.py lands
         try:
-            from lerobot_isaac_dashboard.report import export_report  # type: ignore[import-not-found]
+            from lerobot_isaac_dashboard.report import export_report
 
             with st.spinner("Generating static report…"):
-                report_path = export_report(ctx)
-            st.success(f"Report exported to: {report_path}")
+                report_path = export_report(
+                    workspace_root,
+                    session_id=session_id,
+                )
+            st.success(f"Report written: {report_path}")
             with open(report_path, "rb") as fh:
                 st.download_button(
-                    label="Download report",
+                    label="Download report.html",
                     data=fh,
-                    file_name="lerobot-isaac-report.html",
+                    file_name="report.html",
                     mime="text/html",
                     key="download_report",
                 )
-        except ImportError:
-            st.info(
-                "Static report export is not yet available. "
-                "It will land in Phase 5 (report.py). "
-                "Re-run the dashboard after P5 ships."
-            )
         except Exception as exc:  # noqa: BLE001
-            st.error(f"Export failed: {exc}")
+            st.exception(exc)
             logger.exception("Export failed")
 
     # ------------------------------------------------------------------

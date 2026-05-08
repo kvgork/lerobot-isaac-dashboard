@@ -1,0 +1,16 @@
+<section id="{{ tab.slug }}">
+  <h2>{{ tab.title }}</h2>
+  {% if tab.warnings %}
+  <div class="warn">
+    <strong>Warnings:</strong>
+    <ul>
+      {% for w in tab.warnings %}<li>{{ w | e }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  {% if tab.body %}
+  {{ tab.body | safe }}
+  {% else %}
+  <p class="empty-state">No data available for this tab in the current workspace snapshot.</p>
+  {% endif %}
+</section>

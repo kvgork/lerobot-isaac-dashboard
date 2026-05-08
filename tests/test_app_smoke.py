@@ -1,4 +1,4 @@
-"""tests/test_app_smoke.py — Smoke and AST tests for app.py and cli.py (P4).
+"""tests/test_app_smoke.py — Smoke and AST tests for app.py and cli.py (P4/P5).
 
 Tests verify:
 - app.py is importable without executing main()
@@ -70,16 +70,21 @@ class TestAppAST:
         """app.py must call st.tabs(."""
         assert "st.tabs(" in app_source, "app.py must call st.tabs("
 
-    def test_has_p5_stub_comment(self, app_source: str):
-        """Export button handler must have a TODO(P5) comment."""
-        assert "TODO(P5)" in app_source, (
-            "app.py must contain a TODO(P5) marker for the export stub"
+    def test_has_p5_export_implementation(self, app_source: str):
+        """Export button handler must call export_report (P5 implementation)."""
+        assert "export_report(" in app_source, (
+            "app.py must call export_report() in the export button handler (P5 is live)"
         )
 
-    def test_import_guard_for_report(self, app_source: str):
-        """app.py must guard the report import with try/except ImportError."""
+    def test_has_download_button(self, app_source: str):
+        """Export button handler must wire st.download_button."""
+        assert "st.download_button" in app_source, (
+            "app.py must call st.download_button after export_report"
+        )
+
+    def test_import_for_report(self, app_source: str):
+        """app.py must import export_report from report module."""
         assert "from lerobot_isaac_dashboard.report import export_report" in app_source
-        assert "ImportError" in app_source
 
 
 # ---------------------------------------------------------------------------
