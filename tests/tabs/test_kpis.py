@@ -8,10 +8,9 @@ Covers:
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock
 
 import plotly.graph_objects as go
-import pytest
 
 from lerobot_isaac_dashboard.tabs._kpis import render_kpi_row
 
@@ -19,6 +18,7 @@ from lerobot_isaac_dashboard.tabs._kpis import render_kpi_row
 # ---------------------------------------------------------------------------
 # Static mode (container=None)
 # ---------------------------------------------------------------------------
+
 
 def test_static_mode_returns_figure():
     """container=None must return a go.Figure."""
@@ -71,6 +71,7 @@ def test_static_mode_empty_items_returns_figure():
 # Live mode (mock Streamlit container)
 # ---------------------------------------------------------------------------
 
+
 def test_live_mode_calls_columns():
     """Live mode must call container.columns(n) with the number of items."""
     items = [("A", 1, None), ("B", 2, "+1"), ("C", 3, None)]
@@ -97,7 +98,9 @@ def test_live_mode_calls_metric_on_each_column():
     render_kpi_row(mock_container, items)
 
     mock_cols[0].metric.assert_called_once_with(label="Episodes", value=50, delta=None)
-    mock_cols[1].metric.assert_called_once_with(label="Frames", value=5000, delta="+100")
+    mock_cols[1].metric.assert_called_once_with(
+        label="Frames", value=5000, delta="+100"
+    )
 
 
 def test_live_mode_empty_items_no_error():

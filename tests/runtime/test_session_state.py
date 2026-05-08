@@ -9,10 +9,7 @@ Tests cover:
 from __future__ import annotations
 
 import os
-import time
-from pathlib import Path
 
-import pytest
 
 from lerobot_isaac_dashboard.runtime.session_state import (
     default_session_id,
@@ -24,6 +21,7 @@ from lerobot_isaac_dashboard.runtime.session_state import (
 # ---------------------------------------------------------------------------
 # resolve_workspace_root
 # ---------------------------------------------------------------------------
+
 
 class TestResolveWorkspaceRoot:
     def test_cli_arg_takes_priority(self, tmp_path, monkeypatch):
@@ -86,7 +84,8 @@ class TestResolveWorkspaceRoot:
         meta_path.mkdir()
 
         # Inject a fake lerobot_isaac_meta module
-        import types, sys
+        import types
+        import sys
 
         fake_meta = types.ModuleType("lerobot_isaac_meta")
         fake_wp = types.ModuleType("lerobot_isaac_meta.workspace_paths")
@@ -108,6 +107,7 @@ class TestResolveWorkspaceRoot:
 # ---------------------------------------------------------------------------
 # list_session_ids
 # ---------------------------------------------------------------------------
+
 
 class TestListSessionIds:
     def test_returns_sorted_list(self, tmp_path):
@@ -163,6 +163,7 @@ class TestListSessionIds:
 # ---------------------------------------------------------------------------
 # default_session_id
 # ---------------------------------------------------------------------------
+
 
 class TestDefaultSessionId:
     def test_returns_most_recent_by_mtime(self, tmp_path):

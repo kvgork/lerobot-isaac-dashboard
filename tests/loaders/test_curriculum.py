@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 
 from lerobot_isaac_dashboard.loaders.curriculum import (
     CURRICULUM_HISTORY_SCHEMA,
@@ -18,6 +17,7 @@ EXPECTED_HISTORY_COLS = list(CURRICULUM_HISTORY_SCHEMA.keys())
 # ---------------------------------------------------------------------------
 # Empty-state
 # ---------------------------------------------------------------------------
+
 
 def test_curriculum_empty(workspace_root):
     result = load_curriculum(workspace_root)
@@ -35,6 +35,7 @@ def test_curriculum_empty_no_exception(tmp_path):
 # ---------------------------------------------------------------------------
 # Happy path
 # ---------------------------------------------------------------------------
+
 
 def _write_curriculum_files(workspace_root: Path, n_history: int = 3) -> None:
     outputs_dir = workspace_root / "outputs"
@@ -60,7 +61,7 @@ def _write_curriculum_files(workspace_root: Path, n_history: int = 3) -> None:
             fh.write(
                 json.dumps(
                     {
-                        "ts": f"2026-05-0{i+1}T10:00:00Z",
+                        "ts": f"2026-05-0{i + 1}T10:00:00Z",
                         "stage": f"stage_{i}",
                         "advancement_reason": f"reason_{i}",
                         "task_config_diff": {"difficulty": i},
@@ -96,6 +97,7 @@ def test_curriculum_stage_only(workspace_root):
 # ---------------------------------------------------------------------------
 # Malformed
 # ---------------------------------------------------------------------------
+
 
 def test_curriculum_malformed_stage_json(workspace_root):
     """Broken curriculum_stage.json — returns empty current dict + warning."""

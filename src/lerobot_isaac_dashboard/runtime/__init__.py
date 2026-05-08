@@ -6,7 +6,10 @@ refresh        — auto-refresh wiring (st.autorefresh + optional watchdog)
 session_state  — session_id selector, workspace_root resolver
 """
 
-from lerobot_isaac_dashboard.runtime.refresh import register_autorefresh, register_watchdog
+from lerobot_isaac_dashboard.runtime.refresh import (
+    register_autorefresh,
+    register_watchdog,
+)
 from lerobot_isaac_dashboard.runtime.session_state import (
     default_session_id,
     list_session_ids,

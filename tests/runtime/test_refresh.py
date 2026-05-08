@@ -9,16 +9,13 @@ Tests cover:
 from __future__ import annotations
 
 import sys
-import types
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _remove_module(name: str) -> None:
     """Remove a module from sys.modules if present."""
@@ -40,6 +37,7 @@ def _install_fake_streamlit(*, has_autorefresh: bool = False) -> MagicMock:
 # register_autorefresh
 # ---------------------------------------------------------------------------
 
+
 class TestRegisterAutorefresh:
     def test_noop_when_interval_zero(self):
         """Zero interval should not attempt to call any Streamlit API."""
@@ -58,7 +56,9 @@ class TestRegisterAutorefresh:
         _remove_module("streamlit")
         _remove_module("streamlit_autorefresh")
 
-        with patch.dict(sys.modules, {"streamlit": None, "streamlit_autorefresh": None}):
+        with patch.dict(
+            sys.modules, {"streamlit": None, "streamlit_autorefresh": None}
+        ):
             from lerobot_isaac_dashboard.runtime import refresh as refresh_mod
             import importlib
 
@@ -101,6 +101,7 @@ class TestRegisterAutorefresh:
 # ---------------------------------------------------------------------------
 # register_watchdog
 # ---------------------------------------------------------------------------
+
 
 class TestRegisterWatchdog:
     def test_noop_when_watchdog_absent(self, tmp_path, monkeypatch):
@@ -182,8 +183,6 @@ class TestRegisterWatchdog:
         importlib.reload(refresh_mod)
 
         # Pass a nonexistent path — should not raise
-        refresh_mod.register_watchdog(
-            tmp_path, paths=["nonexistent_dir_abc123"]
-        )
+        refresh_mod.register_watchdog(tmp_path, paths=["nonexistent_dir_abc123"])
         # Observer.schedule should NOT have been called (dir doesn't exist)
         fake_observer.schedule.assert_not_called()

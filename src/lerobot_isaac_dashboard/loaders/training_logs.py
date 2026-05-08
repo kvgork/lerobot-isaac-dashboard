@@ -55,6 +55,7 @@ _STEP_COMMENT_RE = re.compile(r"#\s*step=(\d+)")
 # Public loader
 # ---------------------------------------------------------------------------
 
+
 def load_training_logs(
     workspace_root: Path, *, session_id: str | None = None
 ) -> LoaderResult:
@@ -126,8 +127,16 @@ def load_training_logs(
 # Noise tokens that appear in log lines but are not real metrics
 _NOISE_TOKENS = frozenset(
     {
-        "step", "epoch", "it", "iter", "batch", "lr", "e", "E",
-        "nan", "inf",
+        "step",
+        "epoch",
+        "it",
+        "iter",
+        "batch",
+        "lr",
+        "e",
+        "E",
+        "nan",
+        "inf",
     }
 )
 

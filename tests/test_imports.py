@@ -4,7 +4,6 @@ Per ADR-0003: lerobot_isaac_dashboard must be importable without any heavy depen
 """
 
 import sys
-import importlib
 import types
 
 

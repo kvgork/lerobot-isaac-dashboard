@@ -8,7 +8,6 @@ Covers:
 
 from __future__ import annotations
 
-import re
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -24,6 +23,7 @@ from lerobot_isaac_dashboard.tabs._base import Tab
 # ---------------------------------------------------------------------------
 # Shared fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_empty_ctx(workspace_root: Path) -> TabContext:
     """Build a TabContext with all-empty loader results."""
@@ -49,6 +49,7 @@ def _make_empty_ctx(workspace_root: Path) -> TabContext:
 # ---------------------------------------------------------------------------
 # Test: all tabs with empty ctx
 # ---------------------------------------------------------------------------
+
 
 class TestRenderTabEmptyCtx:
     """All 8 tabs must produce (html, warnings) tuples without raising."""
@@ -93,17 +94,20 @@ class TestRenderTabEmptyCtx:
 # Test: populated tab produces Plotly divs
 # ---------------------------------------------------------------------------
 
+
 class TestRenderTabPopulated:
     """PipelineHealthTab with event data should produce at least one Plotly div."""
 
     def _make_events_ctx(self, workspace_root: Path) -> TabContext:
-        events_df = pd.DataFrame({
-            "ts": pd.to_datetime(["2026-05-08T12:00:00"]),
-            "session_id": ["s1"],
-            "phase": ["data_collection"],
-            "event": ["start"],
-            "data": ["{}"],
-        })
+        events_df = pd.DataFrame(
+            {
+                "ts": pd.to_datetime(["2026-05-08T12:00:00"]),
+                "session_id": ["s1"],
+                "phase": ["data_collection"],
+                "event": ["start"],
+                "data": ["{}"],
+            }
+        )
         events_result = LoaderResult(df=events_df, is_empty=False)
         empty_result = LoaderResult(df=pd.DataFrame(), is_empty=True)
         loader_results = {
@@ -157,6 +161,7 @@ class TestRenderTabPopulated:
 # Test: include_plotlyjs propagation
 # ---------------------------------------------------------------------------
 
+
 class TestIncludePlotlyJsFlag:
     """The include_plotlyjs flag is passed to the first fig only."""
 
@@ -164,13 +169,15 @@ class TestIncludePlotlyJsFlag:
         """include_plotlyjs='cdn' for first fig should embed a CDN <script>."""
         from lerobot_isaac_dashboard.tabs.pipeline_health import PipelineHealthTab
 
-        events_df = pd.DataFrame({
-            "ts": pd.to_datetime(["2026-05-08T12:00:00"]),
-            "session_id": ["s1"],
-            "phase": ["data_collection"],
-            "event": ["start"],
-            "data": ["{}"],
-        })
+        events_df = pd.DataFrame(
+            {
+                "ts": pd.to_datetime(["2026-05-08T12:00:00"]),
+                "session_id": ["s1"],
+                "phase": ["data_collection"],
+                "event": ["start"],
+                "data": ["{}"],
+            }
+        )
         events_result = LoaderResult(df=events_df, is_empty=False)
         empty_result = LoaderResult(df=pd.DataFrame(), is_empty=True)
         loader_results = {
@@ -202,6 +209,7 @@ class TestIncludePlotlyJsFlag:
 # ---------------------------------------------------------------------------
 # Test: error handling
 # ---------------------------------------------------------------------------
+
 
 class TestRenderTabErrorHandling:
     """render_tab_to_html captures render errors as warnings, not exceptions."""

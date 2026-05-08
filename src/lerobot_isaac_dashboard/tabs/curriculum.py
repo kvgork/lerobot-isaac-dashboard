@@ -140,13 +140,20 @@ class CurriculumTab(Tab):
         if task_config and isinstance(task_config, dict):
             trigger_keys = list(task_config.keys())
             trigger_vals = [str(task_config[k]) for k in trigger_keys]
-            current_pcs = [current_pc_success if k == "pc_success_threshold" else "—" for k in trigger_keys]
+            current_pcs = [
+                current_pc_success if k == "pc_success_threshold" else "—"
+                for k in trigger_keys
+            ]
 
             trigger_fig = go.Figure(
                 data=[
                     go.Table(
                         header=dict(
-                            values=["<b>Trigger Key</b>", "<b>Required</b>", "<b>Current</b>"],
+                            values=[
+                                "<b>Trigger Key</b>",
+                                "<b>Required</b>",
+                                "<b>Current</b>",
+                            ],
                             fill_color="paleturquoise",
                             align="left",
                         ),
@@ -169,7 +176,11 @@ class CurriculumTab(Tab):
         # ------------------------------------------------------------------ #
         # Figure 4 — diff-table: task config across stages
         # ------------------------------------------------------------------ #
-        if history_df is not None and not history_df.empty and "task_config_diff" in history_df.columns:
+        if (
+            history_df is not None
+            and not history_df.empty
+            and "task_config_diff" in history_df.columns
+        ):
             diff_rows = history_df[["stage", "task_config_diff"]].dropna()
             if not diff_rows.empty:
                 diff_stages = list(diff_rows["stage"].astype(str))

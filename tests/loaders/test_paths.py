@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
 
 import pytest
 
-from lerobot_isaac_dashboard.loaders.paths import WorkspacePaths, load_paths
+from lerobot_isaac_dashboard.loaders.paths import load_paths
 
 
 def test_load_paths_from_explicit_root(tmp_path):

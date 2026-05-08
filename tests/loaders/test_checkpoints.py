@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
-from lerobot_isaac_dashboard.loaders.checkpoints import CHECKPOINT_SCHEMA, load_checkpoints
+from lerobot_isaac_dashboard.loaders.checkpoints import (
+    CHECKPOINT_SCHEMA,
+    load_checkpoints,
+)
 
 EXPECTED_COLS = list(CHECKPOINT_SCHEMA.keys())
 
@@ -14,6 +16,7 @@ EXPECTED_COLS = list(CHECKPOINT_SCHEMA.keys())
 # ---------------------------------------------------------------------------
 # Empty-state
 # ---------------------------------------------------------------------------
+
 
 def test_checkpoints_empty(workspace_root):
     result = load_checkpoints(workspace_root)
@@ -31,7 +34,10 @@ def test_checkpoints_empty_no_exception(tmp_path):
 # Happy path
 # ---------------------------------------------------------------------------
 
-def _make_checkpoint(workspace_root: Path, arch: str, run_id: str, filename: str) -> Path:
+
+def _make_checkpoint(
+    workspace_root: Path, arch: str, run_id: str, filename: str
+) -> Path:
     ckpt_dir = workspace_root / "outputs" / "checkpoints" / arch / run_id
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     ckpt = ckpt_dir / filename
@@ -80,6 +86,7 @@ def test_checkpoints_safetensors(workspace_root):
 # ---------------------------------------------------------------------------
 # Malformed
 # ---------------------------------------------------------------------------
+
 
 def test_checkpoints_no_step_in_name(workspace_root):
     """A checkpoint with no step in name still appears but with step=NA + warning."""

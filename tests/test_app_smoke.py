@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import ast
 import sys
-import types
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -50,6 +49,7 @@ _P8_SYMBOLS = [
 # AST checks — no imports needed
 # ---------------------------------------------------------------------------
 
+
 class TestAppAST:
     """AST-level structural checks on app.py."""
 
@@ -73,9 +73,7 @@ class TestAppAST:
     @pytest.mark.parametrize("tab_class", _EXPECTED_TAB_CLASSES)
     def test_references_tab_class(self, app_source: str, tab_class: str):
         """app.py source must reference each of the 8 TABS class names."""
-        assert tab_class in app_source, (
-            f"app.py must reference tab class '{tab_class}'"
-        )
+        assert tab_class in app_source, f"app.py must reference tab class '{tab_class}'"
 
     def test_calls_st_tabs(self, app_source: str):
         """app.py must call st.tabs(."""
@@ -104,9 +102,7 @@ class TestAppAST:
     @pytest.mark.parametrize("symbol", _P8_SYMBOLS)
     def test_references_p8_symbol(self, app_source: str, symbol: str):
         """app.py must reference each P8 snapshot/compare symbol."""
-        assert symbol in app_source, (
-            f"app.py must reference P8 symbol '{symbol}'"
-        )
+        assert symbol in app_source, f"app.py must reference P8 symbol '{symbol}'"
 
     def test_has_mode_radio(self, app_source: str):
         """app.py sidebar must contain a 'Mode' radio widget."""
@@ -137,6 +133,7 @@ class TestAppAST:
 # Import smoke — streamlit is mocked so main() is never called
 # ---------------------------------------------------------------------------
 
+
 class TestAppImport:
     """app.py must import without raising (streamlit not actually launched)."""
 
@@ -151,9 +148,7 @@ class TestAppImport:
         fake_st = self._make_fake_streamlit()
         monkeypatch.setitem(sys.modules, "streamlit", fake_st)
         # Remove cached module so import is fresh
-        monkeypatch.delitem(
-            sys.modules, "lerobot_isaac_dashboard.app", raising=False
-        )
+        monkeypatch.delitem(sys.modules, "lerobot_isaac_dashboard.app", raising=False)
 
         import importlib
         import lerobot_isaac_dashboard.app as app_mod
@@ -165,9 +160,7 @@ class TestAppImport:
         """LOADERS dict must be present and have the expected slugs."""
         fake_st = self._make_fake_streamlit()
         monkeypatch.setitem(sys.modules, "streamlit", fake_st)
-        monkeypatch.delitem(
-            sys.modules, "lerobot_isaac_dashboard.app", raising=False
-        )
+        monkeypatch.delitem(sys.modules, "lerobot_isaac_dashboard.app", raising=False)
 
         import importlib
         import lerobot_isaac_dashboard.app as app_mod
@@ -189,6 +182,7 @@ class TestAppImport:
 # ---------------------------------------------------------------------------
 # cli.py smoke
 # ---------------------------------------------------------------------------
+
 
 class TestCliSmoke:
     """cli.py must be importable and main() must accept an argv list."""

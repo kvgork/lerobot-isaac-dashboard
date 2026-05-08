@@ -149,7 +149,7 @@ class SnapshotMeta:
         }
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "SnapshotMeta":
+    def from_dict(cls, d: dict[str, Any]) -> SnapshotMeta:
         """Deserialize from a dict (e.g. from meta.json)."""
         return cls(
             snapshot_id=d["snapshot_id"],
@@ -257,10 +257,16 @@ def _save_loader_result(loaders_dir: Path, slug: str, result: LoaderResult) -> N
         for member_key, member_type in spec["dict_members"].items():
             member_val = df_dict.get(member_key)
             if member_type == "df":
-                df_val = member_val if isinstance(member_val, pd.DataFrame) else pd.DataFrame()
+                df_val = (
+                    member_val
+                    if isinstance(member_val, pd.DataFrame)
+                    else pd.DataFrame()
+                )
                 _write_df(loaders_dir / f"{slug}__{member_key}.parquet", df_val)
             else:  # json
-                _write_json(loaders_dir / f"{slug}__{member_key}.json", member_val or {})
+                _write_json(
+                    loaders_dir / f"{slug}__{member_key}.json", member_val or {}
+                )
 
 
 def _load_loader_result(loaders_dir: Path, slug: str) -> LoaderResult:
@@ -277,9 +283,13 @@ def _load_loader_result(loaders_dir: Path, slug: str) -> LoaderResult:
     df_dict: dict[str, Any] = {}
     for member_key, member_type in spec["dict_members"].items():
         if member_type == "df":
-            df_dict[member_key] = _read_df(loaders_dir / f"{slug}__{member_key}.parquet")
+            df_dict[member_key] = _read_df(
+                loaders_dir / f"{slug}__{member_key}.parquet"
+            )
         else:  # json
-            df_dict[member_key] = _read_json(loaders_dir / f"{slug}__{member_key}.json") or {}
+            df_dict[member_key] = (
+                _read_json(loaders_dir / f"{slug}__{member_key}.json") or {}
+            )
 
     is_empty = all(
         (isinstance(v, pd.DataFrame) and v.empty) or (isinstance(v, dict) and not v)
@@ -513,7 +523,8 @@ def cli_main(argv: list[str] | None = None) -> int:
         help="'save' (default) or 'list' existing snapshots.",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         default=False,
         help="Enable DEBUG logging.",
@@ -534,7 +545,9 @@ def cli_main(argv: list[str] | None = None) -> int:
             return 0
         for m in metas:
             label_str = f"[{m.label}]" if m.label else ""
-            print(f"{m.snapshot_id}  {m.ts.strftime('%Y-%m-%d %H:%M:%S UTC')}  {label_str}")
+            print(
+                f"{m.snapshot_id}  {m.ts.strftime('%Y-%m-%d %H:%M:%S UTC')}  {label_str}"
+            )
         return 0
 
     # save

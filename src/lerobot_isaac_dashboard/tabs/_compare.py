@@ -65,19 +65,14 @@ class CompareWrapper:
         (figs_a, figs_b)
             Lists of figures from each side.
         """
-        try:
-            import streamlit as st
+        from importlib.util import find_spec
 
-            _has_st = True
-        except ImportError:
-            _has_st = False
+        _has_st = find_spec("streamlit") is not None
 
         tab_a = self.tab_cls()
         tab_b = self.tab_cls()
 
         if container is not None and _has_st:
-            import streamlit as st
-
             col_a, col_b = container.columns(2)
             col_a.markdown(f"**{label_a}**")
             col_b.markdown(f"**{label_b}**")
@@ -135,12 +130,9 @@ class CompareWrapper:
         except ImportError:
             _has_plotly = False
 
-        try:
-            import streamlit as st
+        from importlib.util import find_spec
 
-            _has_st = True
-        except ImportError:
-            _has_st = False
+        _has_st = find_spec("streamlit") is not None
 
         if not _has_plotly:
             return []
@@ -166,8 +158,11 @@ class CompareWrapper:
                 src_fig = figs[fig_idx]
                 for trace in src_fig.data:
                     new_trace = trace.__class__(
-                        **{k: v for k, v in trace.to_plotly_json().items()
-                           if k not in ("type",)},
+                        **{
+                            k: v
+                            for k, v in trace.to_plotly_json().items()
+                            if k not in ("type",)
+                        },
                         name=f"{snap_label} – {trace.name or ''}".strip(" –"),
                         showlegend=True,
                     )
@@ -186,8 +181,6 @@ class CompareWrapper:
                 overlay_figs.append(overlay)
 
         if container is not None and _has_st:
-            import streamlit as st
-
             for fig in overlay_figs:
                 try:
                     container.plotly_chart(fig, use_container_width=True)

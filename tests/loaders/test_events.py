@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 
 from lerobot_isaac_dashboard.loaders.events import EVENTS_SCHEMA, load_events
 
@@ -15,6 +14,7 @@ EXPECTED_COLS = list(EVENTS_SCHEMA.keys())
 # ---------------------------------------------------------------------------
 # Empty-state
 # ---------------------------------------------------------------------------
+
 
 def test_events_empty(workspace_root):
     result = load_events(workspace_root)
@@ -31,6 +31,7 @@ def test_events_empty_no_exception(tmp_path):
 # Happy path
 # ---------------------------------------------------------------------------
 
+
 def _write_events(workspace_root: Path, session_id: str, records: list[dict]) -> Path:
     sess_dir = workspace_root / ".agent-state" / session_id
     sess_dir.mkdir(parents=True, exist_ok=True)
@@ -46,8 +47,18 @@ def test_events_happy(workspace_root):
         workspace_root,
         "sess_001",
         [
-            {"ts": "2026-05-08T10:00:00Z", "phase": "training", "event": "start", "data": "{}"},
-            {"ts": "2026-05-08T11:00:00Z", "phase": "training", "event": "complete", "data": "{}"},
+            {
+                "ts": "2026-05-08T10:00:00Z",
+                "phase": "training",
+                "event": "start",
+                "data": "{}",
+            },
+            {
+                "ts": "2026-05-08T11:00:00Z",
+                "phase": "training",
+                "event": "complete",
+                "data": "{}",
+            },
         ],
     )
     result = load_events(workspace_root)
@@ -58,8 +69,14 @@ def test_events_happy(workspace_root):
 
 
 def test_events_multiple_sessions(workspace_root):
-    _write_events(workspace_root, "sess_001", [{"ts": "2026-05-08T10:00:00Z", "event": "start"}])
-    _write_events(workspace_root, "sess_002", [{"ts": "2026-05-08T10:30:00Z", "event": "complete"}])
+    _write_events(
+        workspace_root, "sess_001", [{"ts": "2026-05-08T10:00:00Z", "event": "start"}]
+    )
+    _write_events(
+        workspace_root,
+        "sess_002",
+        [{"ts": "2026-05-08T10:30:00Z", "event": "complete"}],
+    )
     result = load_events(workspace_root)
     sessions = set(result.df["session_id"].tolist())
     assert "sess_001" in sessions
@@ -67,8 +84,12 @@ def test_events_multiple_sessions(workspace_root):
 
 
 def test_events_session_filter(workspace_root):
-    _write_events(workspace_root, "sess_001", [{"ts": "2026-05-08T10:00:00Z", "event": "a"}] * 3)
-    _write_events(workspace_root, "sess_002", [{"ts": "2026-05-08T11:00:00Z", "event": "b"}] * 7)
+    _write_events(
+        workspace_root, "sess_001", [{"ts": "2026-05-08T10:00:00Z", "event": "a"}] * 3
+    )
+    _write_events(
+        workspace_root, "sess_002", [{"ts": "2026-05-08T11:00:00Z", "event": "b"}] * 7
+    )
     result = load_events(workspace_root, session_id="sess_001")
     assert len(result.df) == 3
 
@@ -76,6 +97,7 @@ def test_events_session_filter(workspace_root):
 # ---------------------------------------------------------------------------
 # Malformed
 # ---------------------------------------------------------------------------
+
 
 def test_events_malformed_jsonl(workspace_root):
     """Some bad JSONL lines — valid ones still loaded."""

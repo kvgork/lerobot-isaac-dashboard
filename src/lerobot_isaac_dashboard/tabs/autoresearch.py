@@ -117,7 +117,11 @@ class AutoresearchTab(Tab):
         # Figure 2 — scatter: config dimension vs metric
         # ------------------------------------------------------------------ #
         scatter_fig = go.Figure()
-        if history_df is not None and not history_df.empty and "config" in history_df.columns:
+        if (
+            history_df is not None
+            and not history_df.empty
+            and "config" in history_df.columns
+        ):
             # Extract first numeric key from config dicts
             config_col = history_df["config"].dropna()
             if not config_col.empty:
@@ -161,7 +165,11 @@ class AutoresearchTab(Tab):
         # Figure 3 — bar: operator usage frequency
         # ------------------------------------------------------------------ #
         bar_fig = go.Figure()
-        if history_df is not None and not history_df.empty and "status" in history_df.columns:
+        if (
+            history_df is not None
+            and not history_df.empty
+            and "status" in history_df.columns
+        ):
             status_counts = history_df["status"].value_counts()
             bar_fig.add_trace(
                 go.Bar(

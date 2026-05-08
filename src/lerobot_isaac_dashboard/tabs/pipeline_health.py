@@ -14,7 +14,6 @@ Figures:
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 try:
@@ -109,7 +108,12 @@ class PipelineHealthTab(Tab):
                 data=[
                     go.Table(
                         header=dict(
-                            values=["<b>Timestamp</b>", "<b>Phase</b>", "<b>Event</b>", "<b>Data</b>"],
+                            values=[
+                                "<b>Timestamp</b>",
+                                "<b>Phase</b>",
+                                "<b>Event</b>",
+                                "<b>Data</b>",
+                            ],
                             fill_color="salmon",
                             align="left",
                         ),
@@ -138,11 +142,7 @@ class PipelineHealthTab(Tab):
         # Figure 3 — heatmap: agent invocations by phase × event type
         # ------------------------------------------------------------------ #
         if "phase" in df.columns and "event" in df.columns:
-            pivot_df = (
-                df.groupby(["phase", "event"])
-                .size()
-                .reset_index(name="count")
-            )
+            pivot_df = df.groupby(["phase", "event"]).size().reset_index(name="count")
             all_phases = sorted(pivot_df["phase"].astype(str).unique())
             all_events = sorted(pivot_df["event"].astype(str).unique())
 
@@ -150,7 +150,9 @@ class PipelineHealthTab(Tab):
             for phase in all_phases:
                 row_vals: list[int] = []
                 for event in all_events:
-                    mask = (pivot_df["phase"].astype(str) == phase) & (pivot_df["event"].astype(str) == event)
+                    mask = (pivot_df["phase"].astype(str) == phase) & (
+                        pivot_df["event"].astype(str) == event
+                    )
                     count = int(pivot_df[mask]["count"].sum()) if mask.any() else 0
                     row_vals.append(count)
                 z_matrix.append(row_vals)
@@ -180,7 +182,11 @@ class PipelineHealthTab(Tab):
         # KPI tiles
         # ------------------------------------------------------------------ #
         total_events = len(df)
-        n_errors = int(df["event"].str.lower().str.contains("error|fail", na=False).sum()) if "event" in df.columns else 0
+        n_errors = (
+            int(df["event"].str.lower().str.contains("error|fail", na=False).sum())
+            if "event" in df.columns
+            else 0
+        )
         n_sessions = df["session_id"].nunique() if "session_id" in df.columns else 0
 
         kpi_items: list[tuple[str, Any, str | None]] = [
@@ -204,12 +210,10 @@ class PipelineHealthTab(Tab):
         ]
         checklist_names = [name for name, _ in checklist_dirs]
         checklist_status = [
-            "EXISTS" if path.exists() else "MISSING"
-            for _, path in checklist_dirs
+            "EXISTS" if path.exists() else "MISSING" for _, path in checklist_dirs
         ]
         checklist_colors = [
-            "lightgreen" if s == "EXISTS" else "lightsalmon"
-            for s in checklist_status
+            "lightgreen" if s == "EXISTS" else "lightsalmon" for s in checklist_status
         ]
 
         checklist_fig = go.Figure(
@@ -222,7 +226,10 @@ class PipelineHealthTab(Tab):
                     ),
                     cells=dict(
                         values=[checklist_names, checklist_status],
-                        fill_color=[["lavender"] * len(checklist_names), checklist_colors],
+                        fill_color=[
+                            ["lavender"] * len(checklist_names),
+                            checklist_colors,
+                        ],
                         align="left",
                     ),
                 )

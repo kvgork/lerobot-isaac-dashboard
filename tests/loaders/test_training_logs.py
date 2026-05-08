@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from lerobot_isaac_dashboard.loaders.training_logs import (
     TRAINING_LOG_SCHEMA,
@@ -17,6 +16,7 @@ EXPECTED_COLS = list(TRAINING_LOG_SCHEMA.keys())
 # ---------------------------------------------------------------------------
 # Empty-state
 # ---------------------------------------------------------------------------
+
 
 def test_training_logs_empty(workspace_root):
     result = load_training_logs(workspace_root)
@@ -33,6 +33,7 @@ def test_training_logs_empty_no_exception(tmp_path):
 # Happy path
 # ---------------------------------------------------------------------------
 
+
 def _write_log(workspace_root: Path, arch: str, run_id: str, content: str) -> Path:
     log_dir = workspace_root / "outputs" / "checkpoints" / arch / run_id
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -42,10 +43,7 @@ def _write_log(workspace_root: Path, arch: str, run_id: str, content: str) -> Pa
 
 
 def test_training_logs_happy(workspace_root):
-    log_content = (
-        "pc_success=0.73  # step=1000\n"
-        "recon_loss=0.042  # step=1000\n"
-    )
+    log_content = "pc_success=0.73  # step=1000\nrecon_loss=0.042  # step=1000\n"
     _write_log(workspace_root, "smolvla", "run_001", log_content)
     result = load_training_logs(workspace_root)
     assert not result.is_empty
@@ -85,6 +83,7 @@ def test_training_logs_multiple_runs(workspace_root):
 # ---------------------------------------------------------------------------
 # Malformed
 # ---------------------------------------------------------------------------
+
 
 def test_training_logs_empty_file(workspace_root):
     """Empty log.txt returns empty DF, no exception."""

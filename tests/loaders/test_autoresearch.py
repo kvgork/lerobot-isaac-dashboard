@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 
 from lerobot_isaac_dashboard.loaders.autoresearch import (
     HISTORY_SCHEMA,
@@ -18,6 +17,7 @@ EXPECTED_HISTORY_COLS = list(HISTORY_SCHEMA.keys())
 # ---------------------------------------------------------------------------
 # Empty-state
 # ---------------------------------------------------------------------------
+
 
 def test_autoresearch_empty(workspace_root):
     result = load_autoresearch(workspace_root)
@@ -38,6 +38,7 @@ def test_autoresearch_empty_no_exception(tmp_path):
 # ---------------------------------------------------------------------------
 # Happy path fixture
 # ---------------------------------------------------------------------------
+
 
 def _make_autoresearch_slug(
     workspace_root: Path,
@@ -73,7 +74,9 @@ def _make_autoresearch_slug(
     )
 
     # best_config.yaml
-    (slug_dir / "best_config.yaml").write_text("lr: 0.0001\nbatch_size: 16\n", encoding="utf-8")
+    (slug_dir / "best_config.yaml").write_text(
+        "lr: 0.0001\nbatch_size: 16\n", encoding="utf-8"
+    )
 
     # plateau_tracker.json
     (slug_dir / "plateau_tracker.json").write_text(
@@ -120,6 +123,7 @@ def test_autoresearch_all_sessions(workspace_root):
 # Malformed
 # ---------------------------------------------------------------------------
 
+
 def test_autoresearch_malformed_history(workspace_root):
     """Broken JSONL lines are skipped, not empty ones are loaded."""
     slug_dir = workspace_root / ".agent-state" / "sess_bad" / "autoresearch" / "slug_x"
@@ -135,7 +139,9 @@ def test_autoresearch_malformed_history(workspace_root):
 
 def test_autoresearch_empty_slug_dir(workspace_root):
     """Empty slug dir (no files) — handled gracefully."""
-    slug_dir = workspace_root / ".agent-state" / "sess_empty" / "autoresearch" / "empty_slug"
+    slug_dir = (
+        workspace_root / ".agent-state" / "sess_empty" / "autoresearch" / "empty_slug"
+    )
     slug_dir.mkdir(parents=True, exist_ok=True)
     result = load_autoresearch(workspace_root)
     assert result.is_empty

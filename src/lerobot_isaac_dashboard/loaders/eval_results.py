@@ -67,6 +67,7 @@ _EMPTY_DF = empty_df(list(EVAL_SCHEMA.keys()), EVAL_SCHEMA)
 # Public loader
 # ---------------------------------------------------------------------------
 
+
 def load_eval_results(
     workspace_root: Path, *, session_id: str | None = None
 ) -> LoaderResult:
@@ -104,7 +105,9 @@ def load_eval_results(
             with jf.open(encoding="utf-8") as fh:
                 data = json.load(fh)
             if not isinstance(data, dict):
-                warnings.append(f"{jf.name}: expected JSON object, got {type(data).__name__} — skipped")
+                warnings.append(
+                    f"{jf.name}: expected JSON object, got {type(data).__name__} — skipped"
+                )
                 continue
             source_paths.append(jf)
             row = _extract_eval_row(data, jf.name, warnings)
@@ -137,14 +140,13 @@ def load_eval_results(
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _extract_eval_row(data: dict, filename: str, warnings: list[str]) -> dict:
     """Extract a canonical row dict from an eval JSON object."""
     row: dict = {}
     for key in EVAL_SCHEMA:
         if key not in data:
-            warnings.append(
-                f"{filename}: missing key '{key}' — will be NA"
-            )
+            warnings.append(f"{filename}: missing key '{key}' — will be NA")
         row[key] = data.get(key)
     # Derive run_id from filename if absent
     if row.get("run_id") is None:

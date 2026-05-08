@@ -13,12 +13,11 @@ import json
 import re
 from pathlib import Path
 
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_eval_fixture(workspace_root: Path, task_name: str = "PickAndPlace") -> None:
     """Write a minimal eval JSON file so eval_results loader returns data."""
@@ -26,30 +25,37 @@ def _write_eval_fixture(workspace_root: Path, task_name: str = "PickAndPlace") -
     eval_dir.mkdir(parents=True, exist_ok=True)
     eval_file = eval_dir / "eval_20260508_120000.json"
     eval_file.write_text(
-        json.dumps({
-            "task": task_name,
-            "pc_success": 0.85,
-            "mean_ep_len": 42.5,
-            "n_episodes": 10,
-            "timestamp": "2026-05-08T12:00:00",
-        }),
+        json.dumps(
+            {
+                "task": task_name,
+                "pc_success": 0.85,
+                "mean_ep_len": 42.5,
+                "n_episodes": 10,
+                "timestamp": "2026-05-08T12:00:00",
+            }
+        ),
         encoding="utf-8",
     )
 
 
-def _write_events_fixture(workspace_root: Path, session_id: str = "test-session") -> None:
+def _write_events_fixture(
+    workspace_root: Path, session_id: str = "test-session"
+) -> None:
     """Write a minimal events.jsonl so events loader returns data."""
     session_dir = workspace_root / ".agent-state" / session_id
     session_dir.mkdir(parents=True, exist_ok=True)
     events_file = session_dir / "events.jsonl"
     events_file.write_text(
-        json.dumps({
-            "ts": "2026-05-08T12:00:00",
-            "session_id": session_id,
-            "phase": "data_collection",
-            "event": "start",
-            "data": "{}",
-        }) + "\n",
+        json.dumps(
+            {
+                "ts": "2026-05-08T12:00:00",
+                "session_id": session_id,
+                "phase": "data_collection",
+                "event": "start",
+                "data": "{}",
+            }
+        )
+        + "\n",
         encoding="utf-8",
     )
 
@@ -68,6 +74,7 @@ def _has_cdn_script_tag(html: str) -> bool:
 # Tests
 # ---------------------------------------------------------------------------
 
+
 class TestReportExportEmptyWorkspace:
     """Smoke tests against a fresh workspace with no data files."""
 
@@ -85,7 +92,9 @@ class TestReportExportEmptyWorkspace:
         out = export_report(workspace_root)
         content = out.read_text(encoding="utf-8")
 
-        assert "Pipeline Health" in content, "HTML missing 'Pipeline Health' tab heading"
+        assert "Pipeline Health" in content, (
+            "HTML missing 'Pipeline Health' tab heading"
+        )
 
     def test_report_html_has_eight_sections(self, workspace_root):
         from lerobot_isaac_dashboard.report import export_report
@@ -94,8 +103,10 @@ class TestReportExportEmptyWorkspace:
         content = out.read_text(encoding="utf-8")
 
         # Count <section id= tags — one per tab
-        sections = re.findall(r'<section\s+id=', content)
-        assert len(sections) == 8, f"Expected 8 <section id= tags, found {len(sections)}"
+        sections = re.findall(r"<section\s+id=", content)
+        assert len(sections) == 8, (
+            f"Expected 8 <section id= tags, found {len(sections)}"
+        )
 
     def test_manifest_exists_with_all_tabs(self, workspace_root):
         from lerobot_isaac_dashboard.report import export_report
@@ -107,7 +118,9 @@ class TestReportExportEmptyWorkspace:
 
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         assert "tabs" in manifest
-        assert len(manifest["tabs"]) == 8, f"Expected 8 tab entries in manifest, got {len(manifest['tabs'])}"
+        assert len(manifest["tabs"]) == 8, (
+            f"Expected 8 tab entries in manifest, got {len(manifest['tabs'])}"
+        )
 
         # Verify required manifest fields
         assert "run_id" in manifest
@@ -118,7 +131,9 @@ class TestReportExportEmptyWorkspace:
         from lerobot_isaac_dashboard.report import export_report
 
         out = export_report(workspace_root)
-        manifest = json.loads((out.parent / "manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads(
+            (out.parent / "manifest.json").read_text(encoding="utf-8")
+        )
 
         slugs = {t["slug"] for t in manifest["tabs"]}
         expected_slugs = {
@@ -141,7 +156,9 @@ class TestReportExportSessionId:
         from lerobot_isaac_dashboard.report import export_report
 
         out = export_report(workspace_root, session_id="test-session")
-        manifest = json.loads((out.parent / "manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads(
+            (out.parent / "manifest.json").read_text(encoding="utf-8")
+        )
 
         assert manifest["session_id"] == "test-session"
 
@@ -149,7 +166,9 @@ class TestReportExportSessionId:
         from lerobot_isaac_dashboard.report import export_report
 
         out = export_report(workspace_root, session_id="test-session")
-        manifest = json.loads((out.parent / "manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads(
+            (out.parent / "manifest.json").read_text(encoding="utf-8")
+        )
 
         assert "test-session" in manifest["run_id"], (
             f"Expected 'test-session' in run_id, got: {manifest['run_id']}"
@@ -261,7 +280,9 @@ class TestReportExportCustomOutputDir:
             output_dir=tmp_path / "r",
             run_id="my-custom-run-id",
         )
-        manifest = json.loads((out.parent / "manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads(
+            (out.parent / "manifest.json").read_text(encoding="utf-8")
+        )
 
         assert manifest["run_id"] == "my-custom-run-id"
 
@@ -288,8 +309,14 @@ class TestRunLoadersHeadless:
         results = run_loaders_headless(workspace_root)
 
         expected_slugs = {
-            "parquet_dataset", "eval_results", "checkpoints", "training_logs",
-            "autoresearch", "events", "curriculum", "synthetic",
+            "parquet_dataset",
+            "eval_results",
+            "checkpoints",
+            "training_logs",
+            "autoresearch",
+            "events",
+            "curriculum",
+            "synthetic",
         }
         assert set(results.keys()) == expected_slugs
 
@@ -300,7 +327,9 @@ class TestRunLoadersHeadless:
         results = run_loaders_headless(workspace_root)
 
         for slug, result in results.items():
-            assert isinstance(result, LoaderResult), f"Slug {slug!r} returned non-LoaderResult"
+            assert isinstance(result, LoaderResult), (
+                f"Slug {slug!r} returned non-LoaderResult"
+            )
 
     def test_empty_workspace_all_is_empty(self, workspace_root):
         from lerobot_isaac_dashboard.report import run_loaders_headless
@@ -308,4 +337,6 @@ class TestRunLoadersHeadless:
         results = run_loaders_headless(workspace_root)
 
         for slug, result in results.items():
-            assert result.is_empty, f"Expected is_empty=True for {slug!r} on empty workspace"
+            assert result.is_empty, (
+                f"Expected is_empty=True for {slug!r} on empty workspace"
+            )

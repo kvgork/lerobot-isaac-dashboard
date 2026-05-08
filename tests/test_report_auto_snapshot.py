@@ -11,8 +11,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -133,7 +131,9 @@ class TestManifestSnapshotPathField:
 
         out = export_report(ws)
         manifest = json.loads((out.parent / "manifest.json").read_text())
-        assert "snapshot_path" in manifest, "manifest.json must have 'snapshot_path' key"
+        assert "snapshot_path" in manifest, (
+            "manifest.json must have 'snapshot_path' key"
+        )
 
     def test_manifest_has_snapshot_path_key_when_disabled(self, tmp_path):
         ws = _make_workspace(tmp_path)
@@ -162,7 +162,13 @@ class TestExistingReportTestsStillPass:
         manifest = json.loads((out.parent / "manifest.json").read_text())
 
         # All original P5 fields must still be present
-        required_fields = {"run_id", "workspace_root", "session_id", "generated_at", "tabs"}
+        required_fields = {
+            "run_id",
+            "workspace_root",
+            "session_id",
+            "generated_at",
+            "tabs",
+        }
         for field in required_fields:
             assert field in manifest, f"Original manifest field '{field}' is missing"
 

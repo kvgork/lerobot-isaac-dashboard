@@ -24,13 +24,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
-
 # ---------------------------------------------------------------------------
 # Imports — all Streamlit calls are inside main() so the module is importable
 # in test environments that mock streamlit.
 # ---------------------------------------------------------------------------
 
+from lerobot_isaac_dashboard.compare import render_compare_2way, render_compare_nway
 from lerobot_isaac_dashboard.loaders import (
     LoaderResult,
     load_autoresearch,
@@ -39,30 +38,37 @@ from lerobot_isaac_dashboard.loaders import (
     load_eval_results,
     load_events,
     load_parquet_dataset,
-    load_paths,
     load_synthetic,
     load_training_logs,
 )
-from lerobot_isaac_dashboard.runtime.refresh import register_autorefresh, register_watchdog
+from lerobot_isaac_dashboard.runtime.refresh import (
+    register_autorefresh,
+    register_watchdog,
+)
 from lerobot_isaac_dashboard.runtime.session_state import (
     default_session_id,
     list_session_ids,
     resolve_workspace_root,
 )
+from lerobot_isaac_dashboard.snapshots import (
+    list_snapshots,
+    load_snapshot,
+    save_snapshot,
+)
 from lerobot_isaac_dashboard.tabs import (
     TABS,
-    AutoresearchTab,
-    CurriculumTab,
-    DataCollectionTab,
-    EvaluationTab,
-    PipelineHealthTab,
-    PolicyTrainingTab,
-    SyntheticTab,
+    AutoresearchTab,  # noqa: F401  — declared so app.py documents the tab inventory
+    CurriculumTab,  # noqa: F401
+    DataCollectionTab,  # noqa: F401
+    EvaluationTab,  # noqa: F401
+    PipelineHealthTab,  # noqa: F401
+    PolicyTrainingTab,  # noqa: F401
+    SyntheticTab,  # noqa: F401
     TabContext,
-    WorldModelTab,
+    WorldModelTab,  # noqa: F401
 )
-from lerobot_isaac_dashboard.snapshots import save_snapshot, load_snapshot, list_snapshots
-from lerobot_isaac_dashboard.compare import render_compare_2way, render_compare_nway
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Loader registry
@@ -85,6 +91,7 @@ LOADERS: dict[str, Any] = {
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _parse_argv_tail() -> dict[str, str | None]:
     """Parse ``--workspace=...`` and ``--session-id=...`` from sys.argv.
@@ -160,6 +167,7 @@ def _run_all_loaders(
 # Streamlit-cached loader wrapper
 # ---------------------------------------------------------------------------
 
+
 def _get_cached_loaders(
     workspace_root: Path,
     session_id: str | None,
@@ -196,6 +204,7 @@ def _get_cached_loaders(
 # ---------------------------------------------------------------------------
 # Main entrypoint
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Live Streamlit dashboard entrypoint.
@@ -422,6 +431,7 @@ def main() -> None:
 # ---------------------------------------------------------------------------
 # Mode renderers
 # ---------------------------------------------------------------------------
+
 
 def _render_live_mode(
     workspace_root: Path,

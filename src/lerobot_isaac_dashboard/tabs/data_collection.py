@@ -94,8 +94,8 @@ class DataCollectionTab(Tab):
         # length requires reading individual episode parquets)
         valid = df.dropna(subset=["n_frames", "n_episodes"])
         if not valid.empty:
-            mean_len = (
-                valid["n_frames"].astype(float) / valid["n_episodes"].astype(float)
+            mean_len = valid["n_frames"].astype(float) / valid["n_episodes"].astype(
+                float
             )
             hist_fig = go.Figure(
                 data=[
@@ -108,9 +108,7 @@ class DataCollectionTab(Tab):
                 ]
             )
         else:
-            hist_fig = go.Figure(
-                data=[go.Histogram(x=[], name="Mean episode length")]
-            )
+            hist_fig = go.Figure(data=[go.Histogram(x=[], name="Mean episode length")])
         hist_fig.update_layout(
             title="Distribution of Mean Episode Length (frames)",
             xaxis_title="Frames per Episode (mean)",

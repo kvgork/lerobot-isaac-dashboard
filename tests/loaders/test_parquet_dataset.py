@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import pandas as pd
-import pytest
 
 from lerobot_isaac_dashboard.loaders.parquet_dataset import (
     DATASET_SUMMARY_SCHEMA,
@@ -19,6 +18,7 @@ EXPECTED_COLS = list(DATASET_SUMMARY_SCHEMA.keys())
 # ---------------------------------------------------------------------------
 # Empty-state
 # ---------------------------------------------------------------------------
+
 
 def test_parquet_dataset_empty(workspace_root):
     result = load_parquet_dataset(workspace_root)
@@ -36,6 +36,7 @@ def test_parquet_dataset_empty_no_exception(tmp_path):
 # Happy path
 # ---------------------------------------------------------------------------
 
+
 def _write_dataset(workspace_root: Path, repo_id: str, n_episodes: int = 5) -> Path:
     meta_dir = workspace_root / "datasets" / repo_id / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
@@ -51,7 +52,11 @@ def _write_dataset(workspace_root: Path, repo_id: str, n_episodes: int = 5) -> P
     ]
     pd.DataFrame(episodes).to_parquet(meta_dir / "episodes.parquet", index=False)
 
-    info = {"fps": 30, "total_episodes": n_episodes, "total_frames": sum(40 + i for i in range(n_episodes))}
+    info = {
+        "fps": 30,
+        "total_episodes": n_episodes,
+        "total_frames": sum(40 + i for i in range(n_episodes)),
+    }
     (meta_dir / "info.json").write_text(json.dumps(info), encoding="utf-8")
 
     return meta_dir.parent
@@ -85,6 +90,7 @@ def test_parquet_dataset_multiple(workspace_root):
 # Malformed
 # ---------------------------------------------------------------------------
 
+
 def test_parquet_dataset_missing_episodes_parquet(workspace_root):
     """meta/ exists but episodes.parquet missing — warning emitted, row still present."""
     meta_dir = workspace_root / "datasets" / "incomplete" / "meta"
@@ -101,9 +107,9 @@ def test_parquet_dataset_no_source_column(workspace_root):
     """episodes.parquet without source column — source counts zero, warning emitted."""
     meta_dir = workspace_root / "datasets" / "no_src" / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(
-        [{"episode_index": 0, "length": 10, "tasks_index": 0}]
-    ).to_parquet(meta_dir / "episodes.parquet", index=False)
+    pd.DataFrame([{"episode_index": 0, "length": 10, "tasks_index": 0}]).to_parquet(
+        meta_dir / "episodes.parquet", index=False
+    )
     result = load_parquet_dataset(workspace_root)
     assert not result.is_empty
     row = result.df.iloc[0]

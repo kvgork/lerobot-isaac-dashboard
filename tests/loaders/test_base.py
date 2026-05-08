@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
 
 import pandas as pd
-import pytest
 
 from lerobot_isaac_dashboard.loaders._base import (
     LoaderResult,
@@ -22,6 +19,7 @@ from lerobot_isaac_dashboard.loaders._base import (
 # ---------------------------------------------------------------------------
 # empty_df
 # ---------------------------------------------------------------------------
+
 
 def test_empty_df_has_correct_columns():
     cols = ["a", "b", "c"]
@@ -42,6 +40,7 @@ def test_empty_df_extra_columns_in_dtypes_ignored():
 # ---------------------------------------------------------------------------
 # _align_to_schema
 # ---------------------------------------------------------------------------
+
 
 def test_align_adds_missing_columns():
     schema = {"a": "string", "b": "Int64"}
@@ -69,6 +68,7 @@ def test_align_schema_cols_come_first():
 # safe_read_parquet
 # ---------------------------------------------------------------------------
 
+
 def test_safe_read_parquet_missing(tmp_path):
     result = safe_read_parquet(tmp_path / "nonexistent.parquet")
     assert result is None
@@ -92,6 +92,7 @@ def test_safe_read_parquet_corrupt(tmp_path):
 # ---------------------------------------------------------------------------
 # safe_read_jsonl
 # ---------------------------------------------------------------------------
+
 
 def test_safe_read_jsonl_missing(tmp_path):
     result = safe_read_jsonl(tmp_path / "nonexistent.jsonl")
@@ -119,6 +120,7 @@ def test_safe_read_jsonl_skips_bad_lines(tmp_path):
 # safe_read_json
 # ---------------------------------------------------------------------------
 
+
 def test_safe_read_json_missing(tmp_path):
     assert safe_read_json(tmp_path / "nope.json") is None
 
@@ -140,6 +142,7 @@ def test_safe_read_json_corrupt(tmp_path):
 # glob_runs
 # ---------------------------------------------------------------------------
 
+
 def test_glob_runs_missing_root(tmp_path):
     result = glob_runs(tmp_path / "nonexistent", "*.txt")
     assert result == []
@@ -155,6 +158,7 @@ def test_glob_runs_finds_files(tmp_path):
 # ---------------------------------------------------------------------------
 # LoaderResult
 # ---------------------------------------------------------------------------
+
 
 def test_loader_result_defaults():
     df = pd.DataFrame()

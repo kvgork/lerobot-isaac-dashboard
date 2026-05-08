@@ -194,8 +194,17 @@ def _populated_loader_results(tmp_path: Path) -> dict[str, LoaderResult]:
         "autoresearch": LoaderResult(
             df={
                 "history": history_df,
-                "program": {"raw_md": "# test", "session_id": "sess_01", "slug": "lerobot-policy"},
-                "best": {"lr": 1e-3, "batch_size": 32, "session_id": "sess_01", "slug": "lerobot-policy"},
+                "program": {
+                    "raw_md": "# test",
+                    "session_id": "sess_01",
+                    "slug": "lerobot-policy",
+                },
+                "best": {
+                    "lr": 1e-3,
+                    "batch_size": 32,
+                    "session_id": "sess_01",
+                    "slug": "lerobot-policy",
+                },
                 "plateau": {"plateau_score": 0.3, "session_id": "sess_01"},
             },
             is_empty=False,
@@ -228,6 +237,7 @@ def _make_ctx(loader_results: dict, tmp_path: Path) -> TabContext:
 # ---------------------------------------------------------------------------
 # Parametrize
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("tab_class", TABS, ids=[t.slug for t in TABS])
 def test_render_empty_no_exception(tab_class, tmp_path):

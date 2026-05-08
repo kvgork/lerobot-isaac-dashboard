@@ -33,7 +33,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pandas as pd
 
 from lerobot_isaac_dashboard.loaders._base import (
     LoaderResult,
@@ -72,6 +71,7 @@ def _empty_result(warnings: list[str]) -> LoaderResult:
 # ---------------------------------------------------------------------------
 # Public loader
 # ---------------------------------------------------------------------------
+
 
 def load_curriculum(
     workspace_root: Path, *, session_id: str | None = None

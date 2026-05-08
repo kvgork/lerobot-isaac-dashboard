@@ -43,10 +43,12 @@ SnapEntry = tuple[SnapshotMeta, dict[str, LoaderResult]]
 # we catch all exceptions — not just ImportError — when probing availability.
 # ---------------------------------------------------------------------------
 
+
 def _st_available() -> bool:
     """Return True if Streamlit can be imported without errors."""
     try:
         import streamlit  # noqa: F401
+
         return True
     except Exception:  # noqa: BLE001
         return False
@@ -75,9 +77,7 @@ class CompareContext:
     @property
     def labels(self) -> list[str]:
         """Display labels for each snapshot (label or snapshot_id)."""
-        return [
-            m.label or m.snapshot_id for (m, _) in self.snapshots
-        ]
+        return [m.label or m.snapshot_id for (m, _) in self.snapshots]
 
 
 def build_compare_context(
@@ -121,25 +121,37 @@ def _compute_delta_kpis(
     for slug in ("eval_results",):
         ra = a_results.get(slug)
         rb = b_results.get(slug)
-        if ra and not ra.is_empty and isinstance(ra.df, pd.DataFrame) and "pc_success" in ra.df.columns:
+        if (
+            ra
+            and not ra.is_empty
+            and isinstance(ra.df, pd.DataFrame)
+            and "pc_success" in ra.df.columns
+        ):
             va = float(ra.df["pc_success"].dropna().mean()) if not ra.df.empty else None
         else:
             va = None
 
-        if rb and not rb.is_empty and isinstance(rb.df, pd.DataFrame) and "pc_success" in rb.df.columns:
+        if (
+            rb
+            and not rb.is_empty
+            and isinstance(rb.df, pd.DataFrame)
+            and "pc_success" in rb.df.columns
+        ):
             vb = float(rb.df["pc_success"].dropna().mean()) if not rb.df.empty else None
         else:
             vb = None
 
         if va is not None or vb is not None:
             delta = (vb - va) if (va is not None and vb is not None) else None
-            kpis.append({
-                "name": "pc_success (mean)",
-                "value_a": va,
-                "value_b": vb,
-                "delta": delta,
-                "unit": "%",
-            })
+            kpis.append(
+                {
+                    "name": "pc_success (mean)",
+                    "value_a": va,
+                    "value_b": vb,
+                    "delta": delta,
+                    "unit": "%",
+                }
+            )
 
     # training loss (latest) from training_logs
     for slug in ("training_logs",):
@@ -161,13 +173,15 @@ def _compute_delta_kpis(
         vb = _last_loss(rb)
         if va is not None or vb is not None:
             delta = (vb - va) if (va is not None and vb is not None) else None
-            kpis.append({
-                "name": "train_loss (latest)",
-                "value_a": va,
-                "value_b": vb,
-                "delta": delta,
-                "unit": "",
-            })
+            kpis.append(
+                {
+                    "name": "train_loss (latest)",
+                    "value_a": va,
+                    "value_b": vb,
+                    "delta": delta,
+                    "unit": "",
+                }
+            )
 
     return kpis
 
@@ -177,12 +191,20 @@ def _delta_kpi_html(kpis: list[dict[str, Any]], label_a: str, label_b: str) -> s
     if not kpis:
         return ""
     parts = [
-        f'<div class="compare-delta-strip" style="display:flex;gap:16px;padding:8px 0;'
-        f'border-bottom:1px solid #eee;margin-bottom:12px;">'
+        '<div class="compare-delta-strip" style="display:flex;gap:16px;padding:8px 0;'
+        'border-bottom:1px solid #eee;margin-bottom:12px;">'
     ]
     for kpi in kpis:
-        va_str = f"{kpi['value_a']:.4f}{kpi['unit']}" if kpi["value_a"] is not None else "N/A"
-        vb_str = f"{kpi['value_b']:.4f}{kpi['unit']}" if kpi["value_b"] is not None else "N/A"
+        va_str = (
+            f"{kpi['value_a']:.4f}{kpi['unit']}"
+            if kpi["value_a"] is not None
+            else "N/A"
+        )
+        vb_str = (
+            f"{kpi['value_b']:.4f}{kpi['unit']}"
+            if kpi["value_b"] is not None
+            else "N/A"
+        )
         if kpi["delta"] is not None:
             sign = "+" if kpi["delta"] >= 0 else ""
             color = "#2e7d32" if kpi["delta"] >= 0 else "#c62828"
@@ -191,11 +213,11 @@ def _delta_kpi_html(kpis: list[dict[str, Any]], label_a: str, label_b: str) -> s
             delta_str = "<span>N/A</span>"
         parts.append(
             f'<div style="background:#f5f5f5;padding:8px 12px;border-radius:6px;">'
-            f'<strong>{kpi["name"]}</strong><br/>'
-            f'<small>{label_a}</small>: {va_str}<br/>'
-            f'<small>{label_b}</small>: {vb_str}<br/>'
-            f'Delta: {delta_str}'
-            f'</div>'
+            f"<strong>{kpi['name']}</strong><br/>"
+            f"<small>{label_a}</small>: {va_str}<br/>"
+            f"<small>{label_b}</small>: {vb_str}<br/>"
+            f"Delta: {delta_str}"
+            f"</div>"
         )
     parts.append("</div>")
     return "".join(parts)
@@ -206,9 +228,10 @@ def _delta_kpi_html(kpis: list[dict[str, Any]], label_a: str, label_b: str) -> s
 # ---------------------------------------------------------------------------
 
 
-def _make_tab_context(meta: SnapshotMeta, loader_results: dict[str, LoaderResult]) -> Any:
+def _make_tab_context(
+    meta: SnapshotMeta, loader_results: dict[str, LoaderResult]
+) -> Any:
     """Build a TabContext from a snapshot entry."""
-    from datetime import datetime
 
     from lerobot_isaac_dashboard.tabs._base import TabContext
 
@@ -359,8 +382,7 @@ def render_compare_nway(
 
     # Build one ctx per snapshot
     contexts = [
-        (_make_tab_context(m, r), m.label or m.snapshot_id)
-        for (m, r) in snapshots
+        (_make_tab_context(m, r), m.label or m.snapshot_id) for (m, r) in snapshots
     ]
 
     all_figs: dict[str, list[Any]] = {}
@@ -401,8 +423,11 @@ def render_compare_nway(
                 src_fig = figs[fig_idx]
                 for trace in src_fig.data:
                     new_trace = trace.__class__(
-                        **{k: v for k, v in trace.to_plotly_json().items()
-                           if k not in ("type",)},
+                        **{
+                            k: v
+                            for k, v in trace.to_plotly_json().items()
+                            if k not in ("type",)
+                        },
                         name=f"{snap_label} – {trace.name or ''}".strip(" –"),
                         showlegend=True,
                     )
@@ -506,9 +531,7 @@ def export_compare_report(
 
     # Determine output dir
     if output_dir is None:
-        joined = "-vs-".join(
-            (m.label or m.snapshot_id)[:20] for (m, _) in loaded
-        )
+        joined = "-vs-".join((m.label or m.snapshot_id)[:20] for (m, _) in loaded)
         output_dir = workspace_root / "outputs" / "reports" / f"compare-{joined}"
     output_dir = Path(output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -553,19 +576,18 @@ def export_compare_report(
             # N-way: all figs in one column (already overlaid)
             section_body = _figs_to_html(figs)
             label_legend = " vs ".join(labels)
-            section_body = (
-                f"<p><em>Overlaying: {label_legend}</em></p>{section_body}"
-            )
+            section_body = f"<p><em>Overlaying: {label_legend}</em></p>{section_body}"
 
         html_sections.append(
-            f'<section id="{slug}">'
-            f"<h2>{tab_cls.title}</h2>"
-            f"{section_body}"
-            f"</section>"
+            f'<section id="{slug}"><h2>{tab_cls.title}</h2>{section_body}</section>'
         )
 
     plotlyjs_tag = _build_plotlyjs_tag(inline_plotlyjs)
-    mode_label = "Side-by-Side (2-way)" if mode == "2way" else f"N-way Overlay ({len(loaded)} runs)"
+    mode_label = (
+        "Side-by-Side (2-way)"
+        if mode == "2way"
+        else f"N-way Overlay ({len(loaded)} runs)"
+    )
     title = f"lerobot-isaac Compare Report — {mode_label}"
 
     html = f"""<!DOCTYPE html>
@@ -670,7 +692,8 @@ def cli_main(argv: list[str] | None = None) -> int:
         help="Use CDN plotly.js instead of inlining it.",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         default=False,
         help="Enable DEBUG logging.",

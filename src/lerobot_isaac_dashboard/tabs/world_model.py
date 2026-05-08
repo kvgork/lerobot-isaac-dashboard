@@ -33,7 +33,13 @@ except ImportError:
 from lerobot_isaac_dashboard.tabs._base import Tab, TabContext
 
 _WM_ARCHES = {"dreamerv3", "le_world_model", "leworldmodel", "dreamer"}
-_WM_LOSS_METRICS = {"recon_loss", "pred_loss", "reconstruction_loss", "prediction_loss", "kl_loss"}
+_WM_LOSS_METRICS = {
+    "recon_loss",
+    "pred_loss",
+    "reconstruction_loss",
+    "prediction_loss",
+    "kl_loss",
+}
 
 
 class WorldModelTab(Tab):
@@ -69,13 +75,19 @@ class WorldModelTab(Tab):
         # Figure 1 — recon_loss + pred_loss vs step
         # ------------------------------------------------------------------ #
         loss_mask = logs_df["metric_name"].str.lower().isin(_WM_LOSS_METRICS)
-        loss_df = logs_df[loss_mask] if loss_mask.any() else logs_df[
-            logs_df["metric_name"].str.lower().str.contains("loss", na=False)
-        ]
+        loss_df = (
+            logs_df[loss_mask]
+            if loss_mask.any()
+            else logs_df[
+                logs_df["metric_name"].str.lower().str.contains("loss", na=False)
+            ]
+        )
 
         line_fig = go.Figure()
         if not loss_df.empty:
-            for (arch, run_id, metric), grp in loss_df.groupby(["arch", "run_id", "metric_name"]):
+            for (arch, run_id, metric), grp in loss_df.groupby(
+                ["arch", "run_id", "metric_name"]
+            ):
                 grp_sorted = grp.sort_values("step")
                 line_fig.add_trace(
                     go.Scatter(
@@ -136,7 +148,13 @@ class WorldModelTab(Tab):
                 data=[
                     go.Table(
                         header=dict(
-                            values=["<b>Arch</b>", "<b>Run ID</b>", "<b>Step</b>", "<b>Size MB</b>", "<b>Val Loss</b>"],
+                            values=[
+                                "<b>Arch</b>",
+                                "<b>Run ID</b>",
+                                "<b>Step</b>",
+                                "<b>Size MB</b>",
+                                "<b>Val Loss</b>",
+                            ],
                             fill_color="paleturquoise",
                             align="left",
                         ),
@@ -145,8 +163,18 @@ class WorldModelTab(Tab):
                                 list(ckpt_df["arch"].astype(str)),
                                 list(ckpt_df["run_id"].astype(str)),
                                 list(ckpt_df["step"].astype(str)),
-                                list(ckpt_df["size_mb"].fillna(float("nan")).round(2).astype(str)),
-                                list(ckpt_df["val_loss"].fillna(float("nan")).round(4).astype(str)),
+                                list(
+                                    ckpt_df["size_mb"]
+                                    .fillna(float("nan"))
+                                    .round(2)
+                                    .astype(str)
+                                ),
+                                list(
+                                    ckpt_df["val_loss"]
+                                    .fillna(float("nan"))
+                                    .round(4)
+                                    .astype(str)
+                                ),
                             ],
                             fill_color="lavender",
                             align="left",

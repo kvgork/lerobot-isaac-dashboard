@@ -69,7 +69,9 @@ class PolicyTrainingTab(Tab):
         # ------------------------------------------------------------------ #
         # Figure 1 — loss vs step, one trace per (arch, run_id)
         # ------------------------------------------------------------------ #
-        loss_df = logs_df[logs_df["metric_name"].str.lower().str.contains("loss", na=False)]
+        loss_df = logs_df[
+            logs_df["metric_name"].str.lower().str.contains("loss", na=False)
+        ]
         loss_fig = go.Figure()
 
         if not loss_df.empty:
@@ -108,7 +110,13 @@ class PolicyTrainingTab(Tab):
                 data=[
                     go.Table(
                         header=dict(
-                            values=["<b>Arch</b>", "<b>Run ID</b>", "<b>Step</b>", "<b>Size MB</b>", "<b>Val Loss</b>"],
+                            values=[
+                                "<b>Arch</b>",
+                                "<b>Run ID</b>",
+                                "<b>Step</b>",
+                                "<b>Size MB</b>",
+                                "<b>Val Loss</b>",
+                            ],
                             fill_color="paleturquoise",
                             align="left",
                         ),
@@ -117,8 +125,18 @@ class PolicyTrainingTab(Tab):
                                 list(ckpt_df["arch"].astype(str)),
                                 list(ckpt_df["run_id"].astype(str)),
                                 list(ckpt_df["step"].astype(str)),
-                                list(ckpt_df["size_mb"].fillna(float("nan")).round(2).astype(str)),
-                                list(ckpt_df["val_loss"].fillna(float("nan")).round(4).astype(str)),
+                                list(
+                                    ckpt_df["size_mb"]
+                                    .fillna(float("nan"))
+                                    .round(2)
+                                    .astype(str)
+                                ),
+                                list(
+                                    ckpt_df["val_loss"]
+                                    .fillna(float("nan"))
+                                    .round(4)
+                                    .astype(str)
+                                ),
                             ],
                             fill_color="lavender",
                             align="left",
@@ -147,7 +165,9 @@ class PolicyTrainingTab(Tab):
         # KPI tiles
         # ------------------------------------------------------------------ #
         n_runs = logs_df["run_id"].nunique() if not logs_df.empty else 0
-        val_loss_display = f"{latest_val_loss:.4f}" if latest_val_loss is not None else "—"
+        val_loss_display = (
+            f"{latest_val_loss:.4f}" if latest_val_loss is not None else "—"
+        )
 
         kpi_items: list[tuple[str, Any, str | None]] = [
             ("Runs", n_runs, None),

@@ -52,6 +52,7 @@ DATASET_SUMMARY_SCHEMA: dict[str, str] = {
 # Public loader
 # ---------------------------------------------------------------------------
 
+
 def load_parquet_dataset(
     workspace_root: Path, *, session_id: str | None = None
 ) -> LoaderResult:
@@ -74,9 +75,13 @@ def load_parquet_dataset(
 
     # Find candidate dataset roots: datasets/**/**/meta/
     # Pattern: datasets/<anything>/<repo_id>/meta/episodes.parquet
-    candidate_metas = list(datasets_dir.glob("*/*/meta/")) if datasets_dir.exists() else []
+    candidate_metas = (
+        list(datasets_dir.glob("*/*/meta/")) if datasets_dir.exists() else []
+    )
     # Also check datasets/<repo_id>/meta/ (single-level)
-    candidate_metas += list(datasets_dir.glob("*/meta/")) if datasets_dir.exists() else []
+    candidate_metas += (
+        list(datasets_dir.glob("*/meta/")) if datasets_dir.exists() else []
+    )
 
     # Deduplicate
     seen: set[Path] = set()
@@ -115,6 +120,7 @@ def load_parquet_dataset(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _summarise_dataset(
     dataset_root: Path,

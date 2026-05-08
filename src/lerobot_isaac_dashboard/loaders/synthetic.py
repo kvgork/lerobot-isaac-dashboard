@@ -52,6 +52,7 @@ SYNTHETIC_SCHEMA: dict[str, str] = {
 # Public loader
 # ---------------------------------------------------------------------------
 
+
 def load_synthetic(
     workspace_root: Path, *, session_id: str | None = None
 ) -> LoaderResult:
@@ -134,6 +135,7 @@ def load_synthetic(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_task_map(tasks_path: Path, warnings: list[str]) -> pd.Series | None:
     """Return a tasks_index -> task_name Series, or None if unavailable."""

@@ -193,12 +193,12 @@ class TestLoadRoundtrip:
 
     def test_load_by_snapshot_id_string(self, tmp_path):
         ws = _make_workspace(tmp_path)
-        snap_dir = save_snapshot(ws, snapshot_id="roundtrip-test")
-        meta, results = load_snapshot("roundtrip-test", workspace_root=ws)
+        save_snapshot(ws, snapshot_id="roundtrip-test")
+        meta, _results = load_snapshot("roundtrip-test", workspace_root=ws)
         assert meta.snapshot_id == "roundtrip-test"
 
     def test_load_missing_workspace_root_raises(self, tmp_path):
-        ws = _make_workspace(tmp_path)
+        _make_workspace(tmp_path)
         with pytest.raises(ValueError, match="workspace_root must be provided"):
             load_snapshot("some-snap-id", workspace_root=None)
 
@@ -306,7 +306,9 @@ class TestSaveSnapshotGitSha:
         mock_result.returncode = 0
         mock_result.stdout = "abc1234\n"
 
-        with patch("lerobot_isaac_dashboard.snapshots.subprocess.run", return_value=mock_result):
+        with patch(
+            "lerobot_isaac_dashboard.snapshots.subprocess.run", return_value=mock_result
+        ):
             snap_dir = save_snapshot(ws)
 
         meta = json.loads((snap_dir / "meta.json").read_text())
@@ -318,7 +320,9 @@ class TestSaveSnapshotGitSha:
         mock_result = MagicMock()
         mock_result.returncode = 128  # not a git repo
 
-        with patch("lerobot_isaac_dashboard.snapshots.subprocess.run", return_value=mock_result):
+        with patch(
+            "lerobot_isaac_dashboard.snapshots.subprocess.run", return_value=mock_result
+        ):
             snap_dir = save_snapshot(ws)
 
         meta = json.loads((snap_dir / "meta.json").read_text())

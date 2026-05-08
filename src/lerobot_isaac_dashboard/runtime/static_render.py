@@ -9,7 +9,7 @@ No Streamlit dependency — this module must be importable in a headless context
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 
 
 def render_tab_to_html(
-    tab: "Tab",
-    ctx: "TabContext",
+    tab: Tab,
+    ctx: TabContext,
     *,
     include_plotlyjs: str | bool = False,
 ) -> tuple[str, list[str]]:

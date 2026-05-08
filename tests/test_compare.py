@@ -34,6 +34,7 @@ def _make_snap(ws: Path, label: str) -> str:
     """Save a snapshot and return its snapshot_id."""
     snap_dir = save_snapshot(ws, label=label)
     import json
+
     meta = json.loads((snap_dir / "meta.json").read_text())
     return meta["snapshot_id"]
 
@@ -77,7 +78,9 @@ class TestRenderCompare2way:
 
         result = render_compare_2way(entry_a, entry_b, container=None)
         for slug, figs in result.items():
-            assert isinstance(figs, list), f"Expected list for slug {slug!r}, got {type(figs)}"
+            assert isinstance(figs, list), (
+                f"Expected list for slug {slug!r}, got {type(figs)}"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -165,7 +168,7 @@ class TestExportCompareReport2way:
         out = export_compare_report(ws, [id_a, id_b], mode="2way")
         content = out.read_text(encoding="utf-8")
 
-        sections = re.findall(r'<section\s+id=', content)
+        sections = re.findall(r"<section\s+id=", content)
         assert len(sections) == 8, f"Expected 8 sections, got {len(sections)}"
 
     def test_contains_compare_col_divs(self, tmp_path):
@@ -245,7 +248,7 @@ class TestExportCompareReportNway:
 
         out = export_compare_report(ws, ids, mode="nway")
         content = out.read_text(encoding="utf-8")
-        sections = re.findall(r'<section\s+id=', content)
+        sections = re.findall(r"<section\s+id=", content)
         assert len(sections) == 8
 
     def test_cdn_mode(self, tmp_path):

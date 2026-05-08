@@ -31,7 +31,6 @@ from lerobot_isaac_dashboard.loaders._base import (
     LoaderResult,
     _align_to_schema,
     empty_df,
-    glob_runs,
 )
 
 # ---------------------------------------------------------------------------
@@ -55,6 +54,7 @@ _WEIGHT_PATTERNS = ("*.pt", "*.safetensors")
 # ---------------------------------------------------------------------------
 # Public loader
 # ---------------------------------------------------------------------------
+
 
 def load_checkpoints(
     workspace_root: Path, *, session_id: str | None = None
@@ -126,6 +126,7 @@ def load_checkpoints(
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _checkpoint_row(
     arch: str,
     run_id: str,
@@ -183,7 +184,12 @@ def _read_val_loss(run_dir: Path, warnings: list[str]) -> float | None:
                 with yaml_file.open(encoding="utf-8") as fh:
                     data = yaml.safe_load(fh)
                 if isinstance(data, dict):
-                    for key in ("val_loss", "validation_loss", "recon_loss", "pred_loss"):
+                    for key in (
+                        "val_loss",
+                        "validation_loss",
+                        "recon_loss",
+                        "pred_loss",
+                    ):
                         if key in data:
                             return float(data[key])
             except Exception:

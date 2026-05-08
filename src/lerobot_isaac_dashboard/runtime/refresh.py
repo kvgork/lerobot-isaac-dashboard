@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # Timer-based autorefresh
 # ---------------------------------------------------------------------------
 
+
 def register_autorefresh(interval_ms: int, key: str = "refresh") -> None:
     """Register a Streamlit autorefresh timer.
 
@@ -50,7 +51,9 @@ def register_autorefresh(interval_ms: int, key: str = "refresh") -> None:
         from streamlit_autorefresh import st_autorefresh  # type: ignore[import-not-found]
 
         st_autorefresh(interval=interval_ms, key=key)
-        logger.debug("register_autorefresh: using st_autorefresh (interval=%d ms)", interval_ms)
+        logger.debug(
+            "register_autorefresh: using st_autorefresh (interval=%d ms)", interval_ms
+        )
         return
     except ImportError:
         pass
@@ -85,6 +88,7 @@ def register_autorefresh(interval_ms: int, key: str = "refresh") -> None:
 # Watchdog-based file observer
 # ---------------------------------------------------------------------------
 
+
 class _ChangeHandler:
     """Minimal watchdog event handler that marks session_state dirty."""
 
@@ -96,6 +100,7 @@ class _ChangeHandler:
         if self._st is None:
             try:
                 import streamlit as st  # type: ignore[import-not-found]
+
                 self._st = st
             except ImportError:
                 pass

@@ -63,7 +63,11 @@ class SyntheticTab(Tab):
         sources = ["real", "sim_dr", "mimicgen"]
         colors = {"real": "steelblue", "sim_dr": "coral", "mimicgen": "mediumseagreen"}
 
-        tasks = sorted(df["task"].dropna().unique()) if "task" in df.columns and df["task"].notna().any() else ["(all)"]
+        tasks = (
+            sorted(df["task"].dropna().unique())
+            if "task" in df.columns and df["task"].notna().any()
+            else ["(all)"]
+        )
         if not tasks:
             tasks = ["(all)"]
 
@@ -133,8 +137,7 @@ class SyntheticTab(Tab):
         table_sources = list(source_counts.keys())
         table_counts = [source_counts[s] for s in table_sources]
         table_pct = [
-            f"{100 * c / len(df):.1f}%" if len(df) > 0 else "—"
-            for c in table_counts
+            f"{100 * c / len(df):.1f}%" if len(df) > 0 else "—" for c in table_counts
         ]
 
         dedup_fig = go.Figure(

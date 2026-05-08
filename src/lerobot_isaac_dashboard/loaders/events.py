@@ -44,9 +44,8 @@ EVENTS_SCHEMA: dict[str, str] = {
 # Public loader
 # ---------------------------------------------------------------------------
 
-def load_events(
-    workspace_root: Path, *, session_id: str | None = None
-) -> LoaderResult:
+
+def load_events(workspace_root: Path, *, session_id: str | None = None) -> LoaderResult:
     """Load agent event logs from ``.agent-state/<sessionId>/events.jsonl``.
 
     Parameters
@@ -78,9 +77,7 @@ def load_events(
     if session_id is not None:
         session_dirs = [agent_state_dir / session_id]
     else:
-        session_dirs = [
-            d for d in sorted(agent_state_dir.iterdir()) if d.is_dir()
-        ]
+        session_dirs = [d for d in sorted(agent_state_dir.iterdir()) if d.is_dir()]
 
     for sess_dir in session_dirs:
         events_file = sess_dir / "events.jsonl"

@@ -74,6 +74,7 @@ def _empty_result(warnings: list[str]) -> LoaderResult:
 # Public loader
 # ---------------------------------------------------------------------------
 
+
 def load_autoresearch(
     workspace_root: Path, *, session_id: str | None = None
 ) -> LoaderResult:
@@ -109,9 +110,7 @@ def load_autoresearch(
     if session_id is not None:
         session_dirs = [agent_state_dir / session_id]
     else:
-        session_dirs = [
-            d for d in sorted(agent_state_dir.iterdir()) if d.is_dir()
-        ]
+        session_dirs = [d for d in sorted(agent_state_dir.iterdir()) if d.is_dir()]
 
     all_history_rows: list[dict] = []
     last_program: dict = {}
@@ -151,7 +150,9 @@ def load_autoresearch(
                         "slug": slug,
                     }
                 except Exception as exc:  # noqa: BLE001
-                    warnings.append(f"{sess_name}/{slug}/program.md: read error — {exc}")
+                    warnings.append(
+                        f"{sess_name}/{slug}/program.md: read error — {exc}"
+                    )
 
             # best_config.yaml
             best_path = slug_dir / "best_config.yaml"
@@ -194,6 +195,7 @@ def load_autoresearch(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _read_yaml_safe(path: Path, warnings: list[str]) -> dict | None:
     """Read a YAML file; return None and add a warning on failure."""

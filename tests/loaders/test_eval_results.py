@@ -16,6 +16,7 @@ EXPECTED_COLS = list(EVAL_SCHEMA.keys())
 # Empty-state
 # ---------------------------------------------------------------------------
 
+
 def test_eval_results_empty(workspace_root):
     """Point at non-existent outputs/eval/ — returns empty canonical DF."""
     result = load_eval_results(workspace_root)
@@ -33,6 +34,7 @@ def test_eval_results_empty_no_exception(tmp_path):
 # ---------------------------------------------------------------------------
 # Happy path
 # ---------------------------------------------------------------------------
+
 
 def _write_eval_json(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -78,6 +80,7 @@ def test_eval_results_multiple_files(workspace_root):
 # ---------------------------------------------------------------------------
 # Malformed
 # ---------------------------------------------------------------------------
+
 
 def test_eval_results_malformed_json(workspace_root):
     """Truncated JSON — loader returns partial results + warning."""

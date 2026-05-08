@@ -10,7 +10,6 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Union
 
 import pandas as pd
 
@@ -35,7 +34,7 @@ class LoaderResult:
         columns, etc.). The UI can display these as banners.
     """
 
-    df: Union[pd.DataFrame, dict[str, pd.DataFrame]]
+    df: pd.DataFrame | dict[str, pd.DataFrame]
     is_empty: bool
     source_paths: list[Path] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -44,6 +43,7 @@ class LoaderResult:
 # ---------------------------------------------------------------------------
 # DataFrame helpers
 # ---------------------------------------------------------------------------
+
 
 def empty_df(columns: list[str], dtypes: dict[str, str]) -> pd.DataFrame:
     """Return an empty DataFrame with the given columns and dtypes.
@@ -119,6 +119,7 @@ def _align_to_schema(
 # Safe I/O helpers
 # ---------------------------------------------------------------------------
 
+
 def safe_read_parquet(path: Path) -> pd.DataFrame | None:
     """Read a Parquet file; return None on any error.
 
@@ -151,9 +152,7 @@ def safe_read_jsonl(path: Path) -> pd.DataFrame | None:
                 try:
                     records.append(json.loads(line))
                 except json.JSONDecodeError as exc:
-                    logger.debug(
-                        "safe_read_jsonl(%s) line %d: %s", path, lineno, exc
-                    )
+                    logger.debug("safe_read_jsonl(%s) line %d: %s", path, lineno, exc)
         if not records:
             return pd.DataFrame()
         return pd.DataFrame(records)

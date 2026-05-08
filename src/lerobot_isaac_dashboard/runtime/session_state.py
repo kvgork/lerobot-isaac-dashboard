@@ -51,7 +51,9 @@ def resolve_workspace_root(cli_arg: str | Path | None = None) -> Path:
         logger.debug("resolve_workspace_root: using lerobot_isaac_meta %s", p)
         return p
     except (ImportError, AttributeError, Exception) as exc:  # noqa: BLE001
-        logger.debug("resolve_workspace_root: lerobot_isaac_meta not available: %s", exc)
+        logger.debug(
+            "resolve_workspace_root: lerobot_isaac_meta not available: %s", exc
+        )
 
     # 4. Fallback: current working directory
     p = Path.cwd()
@@ -134,6 +136,8 @@ def default_session_id(workspace_root: Path) -> str | None:
                     best_mtime = mtime
                     best_name = entry.name
     except OSError as exc:
-        logger.warning("default_session_id: could not read %s: %s", agent_state_dir, exc)
+        logger.warning(
+            "default_session_id: could not read %s: %s", agent_state_dir, exc
+        )
 
     return best_name

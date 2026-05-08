@@ -22,7 +22,6 @@ import logging
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from importlib.resources import files as _pkg_files
 from pathlib import Path
 from typing import Any
 
@@ -64,13 +63,14 @@ _LOADERS: dict[str, Any] = {
 # Internal data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class _TabRenderResult:
     """Per-tab rendering artefacts used by the Jinja2 template."""
 
     slug: str
     title: str
-    body: str          # pre-rendered HTML fragment (figures concatenated)
+    body: str  # pre-rendered HTML fragment (figures concatenated)
     warnings: list[str]
     n_figures: int
 
@@ -78,6 +78,7 @@ class _TabRenderResult:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def run_loaders_headless(
     workspace_root: Path,
@@ -231,7 +232,7 @@ def export_report(
     snapshot_path: str | None = None
     if with_snapshot:
         try:
-            from lerobot_isaac_dashboard.snapshots import _make_snapshot_id, save_snapshot
+            from lerobot_isaac_dashboard.snapshots import save_snapshot
 
             snap_dir = save_snapshot(
                 workspace_root,
@@ -279,6 +280,7 @@ def export_report(
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _build_plotlyjs_tag(inline: bool) -> str:
     """Return a ``<script>`` tag with either inline JS or a CDN URL."""
     if inline:
@@ -288,7 +290,9 @@ def _build_plotlyjs_tag(inline: bool) -> str:
             js = po.get_plotlyjs()
             return f"<script type='text/javascript'>{js}</script>"
         except Exception as exc:  # noqa: BLE001
-            logger.warning("Could not embed plotly.min.js inline (%s); falling back to CDN", exc)
+            logger.warning(
+                "Could not embed plotly.min.js inline (%s); falling back to CDN", exc
+            )
             inline = False  # fall through to CDN
 
     # CDN path (also fallback if inline failed)
@@ -338,7 +342,9 @@ def _write_csv_dumps(output_dir: Path, loader_results: dict[str, LoaderResult]) 
                     try:
                         sub_df.to_csv(csv_path, index=False)
                     except Exception as exc:  # noqa: BLE001
-                        logger.debug("CSV dump failed for %s.%s: %s", slug, sub_key, exc)
+                        logger.debug(
+                            "CSV dump failed for %s.%s: %s", slug, sub_key, exc
+                        )
         elif isinstance(df, pd.DataFrame) and not df.empty:
             csv_path = data_dir / f"{slug}.csv"
             try:
@@ -350,6 +356,7 @@ def _write_csv_dumps(output_dir: Path, loader_results: dict[str, LoaderResult]) 
 # ---------------------------------------------------------------------------
 # CLI entrypoint
 # ---------------------------------------------------------------------------
+
 
 def cli_main(argv: list[str] | None = None) -> int:
     """CLI for ``python -m lerobot_isaac_dashboard.report`` and ``lerobot-isaac-report``.
@@ -408,7 +415,8 @@ def cli_main(argv: list[str] | None = None) -> int:
         help="Disable the automatic snapshot saved alongside the report.",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         default=False,
         help="Enable DEBUG logging.",
