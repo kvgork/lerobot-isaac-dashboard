@@ -9,7 +9,7 @@ Covers:
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -42,7 +42,7 @@ def _make_empty_ctx(workspace_root: Path) -> TabContext:
         workspace_root=workspace_root,
         session_id=None,
         loader_results=loader_results,
-        refresh_ts=datetime.utcnow(),
+        refresh_ts=datetime.now(UTC),
     )
 
 
@@ -120,7 +120,7 @@ class TestRenderTabPopulated:
             workspace_root=workspace_root,
             session_id="s1",
             loader_results=loader_results,
-            refresh_ts=datetime.utcnow(),
+            refresh_ts=datetime.now(UTC),
         )
 
     def test_pipeline_health_produces_plotly_divs(self, workspace_root):
@@ -187,7 +187,7 @@ class TestIncludePlotlyJsFlag:
             workspace_root=workspace_root,
             session_id="s1",
             loader_results=loader_results,
-            refresh_ts=datetime.utcnow(),
+            refresh_ts=datetime.now(UTC),
         )
         tab = PipelineHealthTab()
 

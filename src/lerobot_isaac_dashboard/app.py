@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -441,7 +441,7 @@ def _render_live_mode(
         workspace_root=workspace_root,
         session_id=session_id,
         loader_results=loader_results,
-        refresh_ts=datetime.utcnow(),
+        refresh_ts=datetime.now(UTC),
     )
 
     # KPI banner

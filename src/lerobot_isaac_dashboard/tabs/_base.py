@@ -6,7 +6,7 @@ Defines the shared contract that every tab module must satisfy.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +40,7 @@ class TabContext:
     workspace_root: Path
     session_id: str | None
     loader_results: dict[str, LoaderResult]
-    refresh_ts: datetime = field(default_factory=datetime.utcnow)
+    refresh_ts: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 class Tab:
