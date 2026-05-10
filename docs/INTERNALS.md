@@ -128,7 +128,7 @@ outputs/snapshots/<snapshot_id>/
 │   {
 │     "snapshot_id": "2026-05-08T072115-baseline",
 │     "label": "baseline",
-│     "workspace_root": "/home/koen/workspaces/lerobot-isaac-training",
+│     "workspace_root": "${LEROBOT_ISAAC_WORKSPACE}",
 │     "session_id": null,
 │     "git_sha": "ecd39d1",
 │     "dashboard_version": "0.1.0",

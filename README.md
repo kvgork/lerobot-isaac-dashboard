@@ -234,7 +234,7 @@ See `../../ARCHITECTURE.md §Spinout Mechanics` for the full procedure.
 
 ## Source-of-Truth Pointers
 
-- Build plan: `/home/koen/tools/claude_code/plans/2026-05-08-lerobot-isaac-dashboard-plan.md`
+- Build plan: `${CLAUDE_CODE_ROOT}/plans/2026-05-08-lerobot-isaac-dashboard-plan.md`
 - ADR-0006 (stack choice): `../../docs/adr/0006-dashboard-stack.md`
 - Workspace ARCHITECTURE.md: `../../ARCHITECTURE.md`
 - Runbook: `../../docs/runbook/07-dashboard.md`

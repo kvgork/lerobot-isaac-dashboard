@@ -223,7 +223,7 @@ Mark with `@pytest.mark.requires_lerobot` so CI skips it automatically.
 
 ## Source-of-Truth Pointers
 
-- Build plan: `/home/koen/tools/claude_code/plans/2026-05-08-lerobot-isaac-dashboard-plan.md`
+- Build plan: `${CLAUDE_CODE_ROOT}/plans/2026-05-08-lerobot-isaac-dashboard-plan.md`
 - ADR-0006 (stack choice): `../../docs/adr/0006-dashboard-stack.md`
 - ADR-0003 (soft-import): `../../docs/adr/0003-soft-import-discipline.md`
 - Workspace CLAUDE.md: `../../CLAUDE.md`
