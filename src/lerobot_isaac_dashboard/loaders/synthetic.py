@@ -98,14 +98,31 @@ def load_synthetic(
         episodes_path = meta_dir / "episodes.parquet"
         tasks_path = meta_dir / "tasks.parquet"
 
+        # Primary layout (v2.x): meta/episodes.parquet single file.
+        # Fallback (lerobot 0.5+ v3.0): meta/episodes/chunk-XXX/file-XXX.parquet
+        # sharded layout. Try single-file first, then concat all shards.
         ep_df = safe_read_parquet(episodes_path)
+        if ep_df is None:
+            shards = sorted(
+                (meta_dir / "episodes").glob("chunk-*/file-*.parquet")
+            )
+            if shards:
+                import pandas as _pd
+                shard_dfs = [
+                    d for d in (safe_read_parquet(s) for s in shards)
+                    if d is not None
+                ]
+                if shard_dfs:
+                    ep_df = _pd.concat(shard_dfs, ignore_index=True)
+                    source_paths.extend(shards)
         if ep_df is None:
             continue
         if "source" not in ep_df.columns:
             # No source column — skip (not a merged/tagged dataset)
             continue
 
-        source_paths.append(episodes_path)
+        if (meta_dir / "episodes.parquet").exists():
+            source_paths.append(episodes_path)
 
         # Join task string if tasks.parquet exists
         task_series = _load_task_map(tasks_path, warnings)
