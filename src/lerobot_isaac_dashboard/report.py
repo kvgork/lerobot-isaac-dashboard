@@ -36,6 +36,7 @@ from lerobot_isaac_dashboard.loaders import (
     load_events,
     load_parquet_dataset,
     load_synthetic,
+    load_system_metrics,
     load_training_logs,
 )
 from lerobot_isaac_dashboard.tabs import TABS, TabContext
@@ -56,6 +57,7 @@ _LOADERS: dict[str, Any] = {
     "events": load_events,
     "curriculum": load_curriculum,
     "synthetic": load_synthetic,
+    "system_metrics": load_system_metrics,
 }
 
 
