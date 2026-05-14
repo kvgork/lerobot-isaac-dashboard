@@ -139,35 +139,55 @@ def load_autoresearch(
                     hist_df = hist_df.rename(columns={"trial_index": "trial"})
                 all_history_rows.append(hist_df)
 
-            # program.md
-            prog_path = slug_dir / "program.md"
-            if prog_path.exists():
+            # program.md OR program.json (workspace bash runners emit JSON)
+            for prog_name in ("program.md", "program.json"):
+                prog_path = slug_dir / prog_name
+                if not prog_path.exists():
+                    continue
                 source_paths.append(prog_path)
                 try:
-                    last_program = {
-                        "raw_md": prog_path.read_text(encoding="utf-8"),
-                        "session_id": sess_name,
-                        "slug": slug,
-                    }
+                    if prog_name.endswith(".json"):
+                        prog_data = safe_read_json(prog_path) or {}
+                        last_program = {
+                            **prog_data,
+                            "session_id": sess_name,
+                            "slug": slug,
+                        }
+                    else:
+                        last_program = {
+                            "raw_md": prog_path.read_text(encoding="utf-8"),
+                            "session_id": sess_name,
+                            "slug": slug,
+                        }
+                    break
                 except Exception as exc:  # noqa: BLE001
                     warnings.append(
-                        f"{sess_name}/{slug}/program.md: read error — {exc}"
+                        f"{sess_name}/{slug}/{prog_name}: read error — {exc}"
                     )
 
-            # best_config.yaml
-            best_path = slug_dir / "best_config.yaml"
-            if best_path.exists():
+            # best_config.yaml (canonical) OR best.json (workspace bash variant)
+            for best_name in ("best_config.yaml", "best.json"):
+                best_path = slug_dir / best_name
+                if not best_path.exists():
+                    continue
                 source_paths.append(best_path)
-                best_data = _read_yaml_safe(best_path, warnings)
+                if best_name.endswith(".yaml"):
+                    best_data = _read_yaml_safe(best_path, warnings)
+                else:
+                    best_data = safe_read_json(best_path)
                 if best_data is not None:
                     last_best = {**best_data, "session_id": sess_name, "slug": slug}
+                break
 
-            # plateau_tracker.json
-            plateau_path = slug_dir / "plateau_tracker.json"
-            data = safe_read_json(plateau_path)
-            if data is not None:
+            # plateau_tracker.json (canonical) OR plateau.json (workspace bash)
+            for plateau_name in ("plateau_tracker.json", "plateau.json"):
+                plateau_path = slug_dir / plateau_name
+                data = safe_read_json(plateau_path)
+                if data is None:
+                    continue
                 source_paths.append(plateau_path)
                 last_plateau = {**data, "session_id": sess_name, "slug": slug}
+                break
 
     if not all_history_rows and not last_program and not last_best and not last_plateau:
         return _empty_result(warnings)
