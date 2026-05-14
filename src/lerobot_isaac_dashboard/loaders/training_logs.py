@@ -59,46 +59,67 @@ _STEP_COMMENT_RE = re.compile(r"#\s*step=(\d+)")
 def load_training_logs(
     workspace_root: Path, *, session_id: str | None = None
 ) -> LoaderResult:
-    """Parse training logs from ``outputs/checkpoints/<arch>/<run_id>/log.txt``.
+    """Parse training logs from training stdout files.
+
+    Primary layout: ``outputs/checkpoints/<arch>/<run_id>/log.txt``.
+
+    Fallback layouts (auto-detected, no config required):
+      * ``logs/<session_or_run>/<stage_or_run>-<arch>.log`` — adapter stdout
+        captured by the pipeline-validation runner.
+      * ``outputs/<run_prefix>/stage-<id>-<arch>/...`` and similar nested run
+        directories: any ``*.log`` or ``cli.log`` directly inside the run dir
+        is treated as a log.txt-equivalent.
 
     Returns
     -------
     LoaderResult
         df has schema TRAINING_LOG_SCHEMA, one row per (step, metric_name) pair.
-        is_empty=True when no log files are found.
+        is_empty=True when no log files are found anywhere.
     """
     workspace_root = Path(workspace_root)
-    checkpoints_root = workspace_root / "outputs" / "checkpoints"
     warnings: list[str] = []
     source_paths: list[Path] = []
     rows: list[dict] = []
 
-    if not checkpoints_root.exists():
-        return LoaderResult(
-            df=empty_df(list(TRAINING_LOG_SCHEMA.keys()), TRAINING_LOG_SCHEMA),
-            is_empty=True,
-            source_paths=[],
-            warnings=warnings,
-        )
+    # ----------------------------------------------------------------- primary
+    checkpoints_root = workspace_root / "outputs" / "checkpoints"
+    if checkpoints_root.exists():
+        for arch_dir in sorted(checkpoints_root.iterdir()):
+            if not arch_dir.is_dir():
+                continue
+            arch = arch_dir.name
+            for run_dir in sorted(arch_dir.iterdir()):
+                if not run_dir.is_dir():
+                    continue
+                run_id = run_dir.name
+                log_file = run_dir / "log.txt"
+                if not log_file.exists():
+                    continue
+                source_paths.append(log_file)
+                mtime = _file_mtime(log_file)
+                _parse_log_file(log_file, arch, run_id, mtime, rows, warnings)
 
-    for arch_dir in sorted(checkpoints_root.iterdir()):
-        if not arch_dir.is_dir():
-            continue
-        arch = arch_dir.name
-        for run_dir in sorted(arch_dir.iterdir()):
-            if not run_dir.is_dir():
+    # --------------------------------------------------------------- fallbacks
+    # logs/<dir>/<stem>.log — infer arch + run_id from the filename.
+    logs_root = workspace_root / "logs"
+    if logs_root.exists():
+        for log_file in sorted(logs_root.rglob("*.log")):
+            if not log_file.is_file():
                 continue
-            run_id = run_dir.name
-            log_file = run_dir / "log.txt"
-            if not log_file.exists():
-                continue
+            arch, run_id = _infer_arch_run(log_file)
             source_paths.append(log_file)
-            try:
-                mtime = datetime.datetime.fromtimestamp(
-                    log_file.stat().st_mtime, tz=datetime.timezone.utc
-                ).isoformat()
-            except OSError:
-                mtime = None
+            mtime = _file_mtime(log_file)
+            _parse_log_file(log_file, arch, run_id, mtime, rows, warnings)
+
+    # outputs/<prefix>/<stage>/cli.log or *.log (sheeprl + adapter side-channels)
+    outputs_root = workspace_root / "outputs"
+    if outputs_root.exists():
+        for log_file in sorted(outputs_root.rglob("cli.log")):
+            if checkpoints_root in log_file.parents:
+                continue  # already covered above
+            arch, run_id = _infer_arch_run(log_file)
+            source_paths.append(log_file)
+            mtime = _file_mtime(log_file)
             _parse_log_file(log_file, arch, run_id, mtime, rows, warnings)
 
     if not rows:
@@ -139,6 +160,51 @@ _NOISE_TOKENS = frozenset(
         "inf",
     }
 )
+
+
+def _file_mtime(p: Path) -> str | None:
+    """Return ISO-8601 UTC mtime for ``p``, or None on stat error."""
+    try:
+        return datetime.datetime.fromtimestamp(
+            p.stat().st_mtime, tz=datetime.timezone.utc
+        ).isoformat()
+    except OSError:
+        return None
+
+
+# Recognise common arch tokens regardless of dir layout.
+_ARCH_TOKENS = (
+    "smolvla",
+    "act",
+    "diffusion",
+    "dreamerv3",
+    "dreamer_v3",
+    "le_world_model",
+    "leworldmodel",
+    "lewm",
+)
+
+
+def _infer_arch_run(p: Path) -> tuple[str, str]:
+    """Heuristic: pick arch token from path; run_id from parent dir / stem.
+
+    Used when the log file does NOT live under
+    ``outputs/checkpoints/<arch>/<run_id>/log.txt``.
+    """
+    haystack = "/".join(p.parts).lower()
+    arch = "unknown"
+    for token in _ARCH_TOKENS:
+        if token in haystack:
+            # Normalise spelling: prefer canonical ``dreamerv3`` / ``le_world_model``.
+            if token == "dreamer_v3":
+                arch = "dreamerv3"
+            elif token in ("leworldmodel", "lewm"):
+                arch = "le_world_model"
+            else:
+                arch = token
+            break
+    run_id = p.stem if p.stem != "cli" else p.parent.name
+    return arch, run_id
 
 
 def _parse_log_file(

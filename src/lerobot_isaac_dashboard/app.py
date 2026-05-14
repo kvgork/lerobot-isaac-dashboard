@@ -201,6 +201,48 @@ def _get_cached_loaders(
         return _run_all_loaders(workspace_root, session_id)
 
 
+def _build_top_level_kpis(
+    loader_results: dict[str, "LoaderResult"],
+) -> list[tuple[str, Any, str | None]]:
+    """Aggregate a small, always-renderable KPI strip across every loader.
+
+    Each KPI is a `(label, value, delta)` tuple consumed by `render_kpi_row`.
+    Missing or empty loaders degrade to ``"—"`` instead of raising — the
+    dashboard must be usable even on a near-empty workspace.
+    """
+    items: list[tuple[str, Any, str | None]] = []
+
+    def _safe_len(slug: str) -> int:
+        r = loader_results.get(slug)
+        if r is None or getattr(r, "is_empty", True):
+            return 0
+        df = getattr(r, "df", None)
+        return 0 if df is None else int(len(df))
+
+    # Episodes (datasets/)
+    pq = loader_results.get("parquet_dataset")
+    if pq is not None and not getattr(pq, "is_empty", True):
+        df = pq.df
+        n_eps = int(df["n_episodes"].sum()) if "n_episodes" in df.columns else len(df)
+        items.append(("Episodes", n_eps, None))
+    else:
+        items.append(("Episodes", "—", None))
+
+    # Training rows (outputs/checkpoints/*/log.txt parsed)
+    items.append(("Training rows", _safe_len("training_logs"), None))
+
+    # Checkpoint files
+    items.append(("Checkpoints", _safe_len("checkpoints"), None))
+
+    # Eval runs
+    items.append(("Eval runs", _safe_len("eval_results"), None))
+
+    # Agent events
+    items.append(("Events", _safe_len("events"), None))
+
+    return items
+
+
 # ---------------------------------------------------------------------------
 # Main entrypoint
 # ---------------------------------------------------------------------------
@@ -454,10 +496,10 @@ def _render_live_mode(
         refresh_ts=datetime.now(UTC),
     )
 
-    # KPI banner
+    # KPI banner — top-level summary aggregating all loaders.
     from lerobot_isaac_dashboard.tabs._kpis import render_kpi_row
 
-    render_kpi_row(ctx)
+    render_kpi_row(st.container(), _build_top_level_kpis(loader_results))
 
     # Tab routing
     tab_titles = [tab_cls.title for tab_cls in TABS]

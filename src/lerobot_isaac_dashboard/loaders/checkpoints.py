@@ -50,6 +50,50 @@ CHECKPOINT_SCHEMA: dict[str, str] = {
 _STEP_RE = re.compile(r"step[_\-]?(\d+)", re.IGNORECASE)
 _WEIGHT_PATTERNS = ("*.pt", "*.safetensors")
 
+# Same arch tokens as training_logs._ARCH_TOKENS; duplicated to keep loaders
+# decoupled (no cross-imports between loader modules).
+_ARCH_TOKENS = (
+    "smolvla",
+    "act",
+    "diffusion",
+    "dreamerv3",
+    "dreamer_v3",
+    "le_world_model",
+    "leworldmodel",
+    "lewm",
+)
+
+
+def _infer_arch_run_from_path(p: Path, outputs_root: Path) -> tuple[str, str]:
+    """Heuristic arch/run derivation for fallback layouts."""
+    haystack = "/".join(p.parts).lower()
+    arch = "unknown"
+    for token in _ARCH_TOKENS:
+        if token in haystack:
+            if token == "dreamer_v3":
+                arch = "dreamerv3"
+            elif token in ("leworldmodel", "lewm"):
+                arch = "le_world_model"
+            else:
+                arch = token
+            break
+    # Run id = first directory under outputs/<run_prefix>/<stage>/ where the
+    # ckpt lives. If the ckpt is at outputs/X/Y/.../file.pt, take Y.
+    try:
+        rel = p.resolve().relative_to(outputs_root.resolve())
+        parts = rel.parts
+        if len(parts) >= 2:
+            run_id = parts[1] if parts[0] in ("checkpoints", "outputs") else parts[0]
+            # For lerobot layout outputs/<prefix>/<stage>/checkpoints/NNN/...
+            # prefer the <stage> dir as run_id.
+            if len(parts) >= 3 and parts[0] not in ("checkpoints",):
+                run_id = parts[1]
+        else:
+            run_id = parts[0] if parts else "unknown"
+    except ValueError:
+        run_id = p.parent.name
+    return arch, run_id
+
 
 # ---------------------------------------------------------------------------
 # Public loader
@@ -59,49 +103,87 @@ _WEIGHT_PATTERNS = ("*.pt", "*.safetensors")
 def load_checkpoints(
     workspace_root: Path, *, session_id: str | None = None
 ) -> LoaderResult:
-    """Load checkpoint metadata from ``outputs/checkpoints/<arch>/<run_id>/``.
+    """Load checkpoint metadata from training output trees.
+
+    Primary layout: ``outputs/checkpoints/<arch>/<run_id>/*.{pt,safetensors}``.
+
+    Fallback: any ``outputs/<run_prefix>/<stage_dir>/`` tree is scanned
+    recursively for ``*.pt`` and ``*.safetensors`` files (this picks up
+    lerobot's nested ``checkpoints/NNNNNN/pretrained_model/model.safetensors``
+    layout produced by ``lerobot-train`` 0.5+, plus the flat
+    ``lewm_minimal_last.pt`` produced by the in-process LeWM trainer).
 
     Returns
     -------
     LoaderResult
         df has schema CHECKPOINT_SCHEMA, one row per checkpoint file found.
-        is_empty=True when no checkpoint files exist.
+        is_empty=True when no checkpoint files exist anywhere.
     """
     workspace_root = Path(workspace_root)
-    checkpoints_root = workspace_root / "outputs" / "checkpoints"
+    outputs_root = workspace_root / "outputs"
+    checkpoints_root = outputs_root / "checkpoints"
     warnings: list[str] = []
     source_paths: list[Path] = []
     rows: list[dict] = []
 
-    if not checkpoints_root.exists():
-        return LoaderResult(
-            df=empty_df(list(CHECKPOINT_SCHEMA.keys()), CHECKPOINT_SCHEMA),
-            is_empty=True,
-            source_paths=[],
-            warnings=warnings,
-        )
+    # Track files we've already accounted for so the fallback doesn't
+    # double-count anything under outputs/checkpoints/.
+    seen: set[Path] = set()
 
-    # Layout: checkpoints/<arch>/<run_id>/*.{pt,safetensors}
-    for arch_dir in sorted(checkpoints_root.iterdir()):
-        if not arch_dir.is_dir():
-            continue
-        arch = arch_dir.name
-        for run_dir in sorted(arch_dir.iterdir()):
-            if not run_dir.is_dir():
+    # ---- primary layout: outputs/checkpoints/<arch>/<run_id>/*.{pt,safetensors}
+    if checkpoints_root.exists():
+        for arch_dir in sorted(checkpoints_root.iterdir()):
+            if not arch_dir.is_dir():
                 continue
-            run_id = run_dir.name
-            val_loss = _read_val_loss(run_dir, warnings)
-            for pattern in _WEIGHT_PATTERNS:
-                for ckpt_file in sorted(run_dir.glob(pattern)):
-                    row = _checkpoint_row(
-                        arch=arch,
-                        run_id=run_id,
-                        ckpt_file=ckpt_file,
-                        val_loss=val_loss,
-                        warnings=warnings,
-                    )
-                    rows.append(row)
-                    source_paths.append(ckpt_file)
+            arch = arch_dir.name
+            for run_dir in sorted(arch_dir.iterdir()):
+                if not run_dir.is_dir():
+                    continue
+                run_id = run_dir.name
+                val_loss = _read_val_loss(run_dir, warnings)
+                # Recurse — lerobot nests the model under
+                # `checkpoints/NNNNNN/pretrained_model/model.safetensors`.
+                for pattern in _WEIGHT_PATTERNS:
+                    for ckpt_file in sorted(run_dir.rglob(pattern)):
+                        if ckpt_file.resolve() in seen:
+                            continue
+                        seen.add(ckpt_file.resolve())
+                        row = _checkpoint_row(
+                            arch=arch,
+                            run_id=run_id,
+                            ckpt_file=ckpt_file,
+                            val_loss=val_loss,
+                            warnings=warnings,
+                        )
+                        rows.append(row)
+                        source_paths.append(ckpt_file)
+
+    # ---- fallback: any other outputs/<...>/ subtree (skip checkpoints_root)
+    if outputs_root.exists():
+        for pattern in _WEIGHT_PATTERNS:
+            for ckpt_file in sorted(outputs_root.rglob(pattern)):
+                if not ckpt_file.is_file():
+                    continue
+                resolved = ckpt_file.resolve()
+                if resolved in seen:
+                    continue
+                if checkpoints_root in ckpt_file.parents:
+                    continue
+                # Skip auto-generated snapshot copies — those mirror canonical
+                # data and would double-count.
+                if "snapshots" in ckpt_file.parts:
+                    continue
+                seen.add(resolved)
+                arch, run_id = _infer_arch_run_from_path(ckpt_file, outputs_root)
+                row = _checkpoint_row(
+                    arch=arch,
+                    run_id=run_id,
+                    ckpt_file=ckpt_file,
+                    val_loss=None,
+                    warnings=warnings,
+                )
+                rows.append(row)
+                source_paths.append(ckpt_file)
 
     if not rows:
         return LoaderResult(
