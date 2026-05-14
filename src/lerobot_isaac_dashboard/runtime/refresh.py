@@ -58,30 +58,30 @@ def register_autorefresh(interval_ms: int, key: str = "refresh") -> None:
     except ImportError:
         pass
 
-    # Fall back to plain streamlit experimental_rerun via a session_state counter
-    # This works without streamlit-autorefresh but requires the caller to also
-    # wire the trigger; we just set a marker in session_state.
+    # NO meta-refresh fallback. An HTML meta-refresh causes a full browser
+    # page reload, which resets every Streamlit widget (mode radio, sidebar
+    # state, scroll position) to its declared default on each tick. From the
+    # user's perspective this looks like "the dashboard keeps switching back
+    # to Live mode and resetting my windows".
+    #
+    # If `streamlit_autorefresh` is not installed, surface a sidebar warning
+    # so the user knows autorefresh is disabled but the rest of the UI keeps
+    # working untouched. They can install the missing dep at any time:
+    #     pip install streamlit-autorefresh
     try:
         import streamlit as st  # type: ignore[import-not-found]
-
-        # Use st.empty to schedule a JS-side meta-refresh via html component
-        # when experimental_rerun is the only available hook.
-        # This is a best-effort fallback: the page auto-refreshes via HTTP
-        # meta-refresh, which reloads the entire page (no partial update).
-        interval_s = max(1, interval_ms // 1000)
-        st.markdown(
-            f'<meta http-equiv="refresh" content="{interval_s}">',
-            unsafe_allow_html=True,
-        )
-        logger.debug(
-            "register_autorefresh: falling back to meta-refresh (interval=%d s)",
-            interval_s,
-        )
     except ImportError:
-        # Running outside Streamlit (pytest). No-op is correct.
         logger.debug("register_autorefresh: streamlit not available — skipping")
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("register_autorefresh: unexpected error: %s", exc)
+        return
+
+    msg = (
+        "Auto-refresh disabled — install `streamlit-autorefresh` to enable "
+        f"timer-based reruns (was: every {interval_ms / 1000:.0f}s)."
+    )
+    if not st.session_state.get("_autorefresh_warning_shown"):
+        st.sidebar.warning(msg)
+        st.session_state["_autorefresh_warning_shown"] = True
+    logger.warning("register_autorefresh: %s", msg)
 
 
 # ---------------------------------------------------------------------------
