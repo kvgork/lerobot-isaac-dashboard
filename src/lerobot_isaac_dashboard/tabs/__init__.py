@@ -29,12 +29,14 @@ from lerobot_isaac_dashboard.tabs.pipeline_health import PipelineHealthTab
 from lerobot_isaac_dashboard.tabs.policy_training import PolicyTrainingTab
 from lerobot_isaac_dashboard.tabs.synthetic import SyntheticTab
 from lerobot_isaac_dashboard.tabs.world_model import WorldModelTab
+from lerobot_isaac_dashboard.tabs.performance import PerformanceTab
 
 TABS: list[type[Tab]] = [
     DataCollectionTab,
     SyntheticTab,
     PolicyTrainingTab,
     WorldModelTab,
+    PerformanceTab,
     EvaluationTab,
     AutoresearchTab,
     CurriculumTab,
@@ -50,6 +52,7 @@ __all__ = [
     "SyntheticTab",
     "PolicyTrainingTab",
     "WorldModelTab",
+    "PerformanceTab",
     "EvaluationTab",
     "AutoresearchTab",
     "CurriculumTab",

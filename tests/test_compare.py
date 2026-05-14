@@ -158,18 +158,21 @@ class TestExportCompareReport2way:
         assert "my-label-A" in content, "HTML should contain label A"
         assert "my-label-B" in content, "HTML should contain label B"
 
-    def test_contains_8_sections(self, tmp_path):
+    def test_contains_all_sections(self, tmp_path):
         ws = _make_workspace(tmp_path)
         id_a = _make_snap(ws, "A")
         id_b = _make_snap(ws, "B")
 
         from lerobot_isaac_dashboard.compare import export_compare_report
+        from lerobot_isaac_dashboard.tabs import TABS
 
         out = export_compare_report(ws, [id_a, id_b], mode="2way")
         content = out.read_text(encoding="utf-8")
 
         sections = re.findall(r"<section\s+id=", content)
-        assert len(sections) == 8, f"Expected 8 sections, got {len(sections)}"
+        assert len(sections) == len(TABS), (
+            f"Expected {len(TABS)} sections, got {len(sections)}"
+        )
 
     def test_contains_compare_col_divs(self, tmp_path):
         ws = _make_workspace(tmp_path)
@@ -177,14 +180,16 @@ class TestExportCompareReport2way:
         id_b = _make_snap(ws, "beta")
 
         from lerobot_isaac_dashboard.compare import export_compare_report
+        from lerobot_isaac_dashboard.tabs import TABS
 
         out = export_compare_report(ws, [id_a, id_b], mode="2way")
         content = out.read_text(encoding="utf-8")
 
         compare_cols = re.findall(r'class="compare-col"', content)
-        # 8 tabs × 2 columns = 16 compare-col divs
-        assert len(compare_cols) == 16, (
-            f"Expected 16 compare-col divs (8 tabs × 2 columns), got {len(compare_cols)}"
+        # N tabs × 2 columns
+        assert len(compare_cols) == 2 * len(TABS), (
+            f"Expected {2 * len(TABS)} compare-col divs ({len(TABS)} tabs × 2 cols), "
+            f"got {len(compare_cols)}"
         )
 
     def test_custom_output_dir(self, tmp_path):
@@ -240,16 +245,17 @@ class TestExportCompareReportNway:
         for lbl in labels:
             assert lbl in content, f"Expected label '{lbl}' in HTML"
 
-    def test_contains_8_sections(self, tmp_path):
+    def test_contains_all_sections(self, tmp_path):
         ws = _make_workspace(tmp_path)
         ids = [_make_snap(ws, f"s{i}") for i in range(3)]
 
         from lerobot_isaac_dashboard.compare import export_compare_report
+        from lerobot_isaac_dashboard.tabs import TABS
 
         out = export_compare_report(ws, ids, mode="nway")
         content = out.read_text(encoding="utf-8")
         sections = re.findall(r"<section\s+id=", content)
-        assert len(sections) == 8
+        assert len(sections) == len(TABS)
 
     def test_cdn_mode(self, tmp_path):
         ws = _make_workspace(tmp_path)

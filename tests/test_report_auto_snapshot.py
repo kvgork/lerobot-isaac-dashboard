@@ -172,10 +172,11 @@ class TestExistingReportTestsStillPass:
         for field in required_fields:
             assert field in manifest, f"Original manifest field '{field}' is missing"
 
-    def test_manifest_tabs_count_still_8(self, tmp_path):
+    def test_manifest_tabs_count_matches_TABS(self, tmp_path):
         ws = _make_workspace(tmp_path)
         from lerobot_isaac_dashboard.report import export_report
+        from lerobot_isaac_dashboard.tabs import TABS
 
         out = export_report(ws)
         manifest = json.loads((out.parent / "manifest.json").read_text())
-        assert len(manifest["tabs"]) == 8
+        assert len(manifest["tabs"]) == len(TABS)

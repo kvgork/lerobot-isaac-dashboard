@@ -175,6 +175,7 @@ class TestAppImport:
             "events",
             "curriculum",
             "synthetic",
+            "system_metrics",
         }
         assert set(app_mod.LOADERS.keys()) == expected_slugs
 

@@ -29,6 +29,7 @@ from lerobot_isaac_dashboard.loaders.eval_results import EVAL_SCHEMA
 from lerobot_isaac_dashboard.loaders.events import EVENTS_SCHEMA
 from lerobot_isaac_dashboard.loaders.parquet_dataset import DATASET_SUMMARY_SCHEMA
 from lerobot_isaac_dashboard.loaders.synthetic import SYNTHETIC_SCHEMA
+from lerobot_isaac_dashboard.loaders.system_metrics import SYSTEM_METRICS_SCHEMA
 from lerobot_isaac_dashboard.loaders.training_logs import TRAINING_LOG_SCHEMA
 from lerobot_isaac_dashboard.tabs import TABS, TabContext
 
@@ -82,6 +83,10 @@ def _empty_loader_results() -> dict[str, LoaderResult]:
         ),
         "events": LoaderResult(
             df=empty_df(list(EVENTS_SCHEMA.keys()), EVENTS_SCHEMA),
+            is_empty=True,
+        ),
+        "system_metrics": LoaderResult(
+            df=empty_df(list(SYSTEM_METRICS_SCHEMA.keys()), SYSTEM_METRICS_SCHEMA),
             is_empty=True,
         ),
     }
@@ -185,12 +190,31 @@ def _populated_loader_results(tmp_path: Path) -> dict[str, LoaderResult]:
         }
     )
 
+    system_metrics_df = pd.DataFrame(
+        {
+            "ts": pd.to_datetime(
+                [ts_str, ts_str, ts_str, ts_str], utc=True
+            ),
+            "elapsed_s": [0.0, 5.0, 10.0, 15.0],
+            "stage": ["policy_train", "policy_train", "wm_train", "wm_train"],
+            "run_id": ["run_001", "run_001", "run_002", "run_002"],
+            "gpu_index": pd.array([0, 0, 0, 0], dtype="Int64"),
+            "utilization_pct": [10.0, 60.0, 80.0, 75.0],
+            "memory_used_mb": [2000.0, 4000.0, 6000.0, 6500.0],
+            "memory_total_mb": [10240.0, 10240.0, 10240.0, 10240.0],
+            "memory_pct": [19.5, 39.1, 58.6, 63.5],
+            "temperature_c": [50.0, 60.0, 70.0, 68.0],
+            "power_draw_w": [120.0, 180.0, 220.0, 210.0],
+        }
+    )
+
     return {
         "parquet_dataset": LoaderResult(df=parquet_df, is_empty=False),
         "synthetic": LoaderResult(df=synthetic_df, is_empty=False),
         "training_logs": LoaderResult(df=logs_df, is_empty=False),
         "checkpoints": LoaderResult(df=checkpoints_df, is_empty=False),
         "eval_results": LoaderResult(df=eval_df, is_empty=False),
+        "system_metrics": LoaderResult(df=system_metrics_df, is_empty=False),
         "autoresearch": LoaderResult(
             df={
                 "history": history_df,

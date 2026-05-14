@@ -96,20 +96,22 @@ class TestReportExportEmptyWorkspace:
             "HTML missing 'Pipeline Health' tab heading"
         )
 
-    def test_report_html_has_eight_sections(self, workspace_root):
+    def test_report_html_has_all_sections(self, workspace_root):
         from lerobot_isaac_dashboard.report import export_report
+        from lerobot_isaac_dashboard.tabs import TABS
 
         out = export_report(workspace_root)
         content = out.read_text(encoding="utf-8")
 
         # Count <section id= tags — one per tab
         sections = re.findall(r"<section\s+id=", content)
-        assert len(sections) == 8, (
-            f"Expected 8 <section id= tags, found {len(sections)}"
+        assert len(sections) == len(TABS), (
+            f"Expected {len(TABS)} <section id= tags, found {len(sections)}"
         )
 
     def test_manifest_exists_with_all_tabs(self, workspace_root):
         from lerobot_isaac_dashboard.report import export_report
+        from lerobot_isaac_dashboard.tabs import TABS
 
         out = export_report(workspace_root)
         manifest_path = out.parent / "manifest.json"
@@ -118,8 +120,8 @@ class TestReportExportEmptyWorkspace:
 
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         assert "tabs" in manifest
-        assert len(manifest["tabs"]) == 8, (
-            f"Expected 8 tab entries in manifest, got {len(manifest['tabs'])}"
+        assert len(manifest["tabs"]) == len(TABS), (
+            f"Expected {len(TABS)} tab entries in manifest, got {len(manifest['tabs'])}"
         )
 
         # Verify required manifest fields
@@ -129,6 +131,7 @@ class TestReportExportEmptyWorkspace:
 
     def test_manifest_tab_slugs_present(self, workspace_root):
         from lerobot_isaac_dashboard.report import export_report
+        from lerobot_isaac_dashboard.tabs import TABS
 
         out = export_report(workspace_root)
         manifest = json.loads(
@@ -136,16 +139,7 @@ class TestReportExportEmptyWorkspace:
         )
 
         slugs = {t["slug"] for t in manifest["tabs"]}
-        expected_slugs = {
-            "data_collection",
-            "synthetic",
-            "policy_training",
-            "world_model",
-            "evaluation",
-            "autoresearch",
-            "curriculum",
-            "pipeline_health",
-        }
+        expected_slugs = {cls.slug for cls in TABS}
         assert slugs == expected_slugs, f"Manifest tab slugs mismatch: {slugs}"
 
 

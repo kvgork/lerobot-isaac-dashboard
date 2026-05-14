@@ -27,6 +27,7 @@ from lerobot_isaac_dashboard.loaders.events import load_events
 from lerobot_isaac_dashboard.loaders.parquet_dataset import load_parquet_dataset
 from lerobot_isaac_dashboard.loaders.paths import WorkspacePaths, load_paths
 from lerobot_isaac_dashboard.loaders.synthetic import load_synthetic
+from lerobot_isaac_dashboard.loaders.system_metrics import load_system_metrics
 from lerobot_isaac_dashboard.loaders.training_logs import load_training_logs
 
 __all__ = [
@@ -40,5 +41,6 @@ __all__ = [
     "load_parquet_dataset",
     "load_paths",
     "load_synthetic",
+    "load_system_metrics",
     "load_training_logs",
 ]
