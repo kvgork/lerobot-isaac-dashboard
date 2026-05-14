@@ -140,10 +140,31 @@ def _summarise_dataset(
     source_mimicgen = 0
 
     # --- episodes.parquet ---------------------------------------------------
+    # Primary layout (LeRobot v2.x): meta/episodes.parquet (single file).
+    # Fallback layout (LeRobot v3.0): meta/episodes/chunk-XXX/file-XXX.parquet
+    # (sharded). Try the single-file path first; if absent, read all shards.
     ep_df = safe_read_parquet(episodes_path)
+    if ep_df is None:
+        ep_shards = sorted(
+            (dataset_root / "meta" / "episodes").glob("chunk-*/file-*.parquet")
+        )
+        if ep_shards:
+            import pandas as _pd
+
+            shard_dfs = [
+                d
+                for d in (safe_read_parquet(s) for s in ep_shards)
+                if d is not None
+            ]
+            if shard_dfs:
+                ep_df = _pd.concat(shard_dfs, ignore_index=True)
+                source_paths.extend(ep_shards)
+
     if ep_df is not None:
-        source_paths.append(episodes_path)
+        if (dataset_root / "meta" / "episodes.parquet").exists():
+            source_paths.append(episodes_path)
         n_episodes = len(ep_df)
+        # v3.0 shards expose `length` per-episode; v2.x uses the same column.
         if "length" in ep_df.columns:
             n_frames = int(ep_df["length"].sum())
         if "source" in ep_df.columns:
@@ -153,18 +174,29 @@ def _summarise_dataset(
             source_mimicgen = int(vc.get("mimicgen", 0))
         else:
             warnings.append(
-                f"{repo_id}: meta/episodes.parquet has no 'source' column — "
+                f"{repo_id}: episodes parquet has no 'source' column — "
                 "source counts are zero"
             )
     else:
-        warnings.append(f"{repo_id}: meta/episodes.parquet not found or unreadable")
+        warnings.append(
+            f"{repo_id}: no episodes parquet found "
+            f"(checked meta/episodes.parquet + meta/episodes/chunk-*/*.parquet)"
+        )
 
     # --- info.json ----------------------------------------------------------
+    # info.json carries the authoritative top-line counts (`total_episodes`,
+    # `total_frames`) and `fps`. Always read it — falling back to its counts
+    # when the episodes parquet is absent or malformed (v3.0 shard datasets
+    # may omit it from the meta dir).
     if info_path.exists():
         try:
             with info_path.open(encoding="utf-8") as fh:
                 info = json.load(fh)
             fps = info.get("fps")
+            if n_episodes is None and "total_episodes" in info:
+                n_episodes = int(info["total_episodes"])
+            if n_frames is None and "total_frames" in info:
+                n_frames = int(info["total_frames"])
             source_paths.append(info_path)
         except Exception as exc:  # noqa: BLE001
             warnings.append(f"{repo_id}: meta/info.json unreadable: {exc}")

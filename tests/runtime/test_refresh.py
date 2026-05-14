@@ -79,23 +79,33 @@ class TestRegisterAutorefresh:
 
         fake_sar.st_autorefresh.assert_called_once_with(interval=10_000, key="test_key")
 
-    def test_falls_back_to_meta_refresh(self, monkeypatch):
-        """Without streamlit_autorefresh, markdown meta-refresh is written."""
+    def test_warns_when_streamlit_autorefresh_missing(self, monkeypatch):
+        """Without streamlit_autorefresh: emit a sidebar warning, do NOT inject
+        a meta-refresh tag (full page reloads reset every widget state)."""
         fake_st = MagicMock()
-        monkeypatch.setitem(sys.modules, "streamlit", fake_st)
-        # Remove streamlit_autorefresh
-        monkeypatch.delitem(sys.modules, "streamlit_autorefresh", raising=False)
+        fake_st.session_state = {}
+        # Block any real streamlit_autorefresh import — even if a prior test
+        # cached the real module in sys.modules, patch.dict with value=None
+        # forces ImportError on `from streamlit_autorefresh import ...`.
+        with patch.dict(
+            sys.modules,
+            {"streamlit": fake_st, "streamlit_autorefresh": None},
+        ):
+            from lerobot_isaac_dashboard.runtime import refresh as refresh_mod
+            import importlib
 
-        from lerobot_isaac_dashboard.runtime import refresh as refresh_mod
-        import importlib
+            importlib.reload(refresh_mod)
+            refresh_mod.register_autorefresh(30_000)
 
-        importlib.reload(refresh_mod)
-        refresh_mod.register_autorefresh(30_000)
-
-        # st.markdown should have been called with a meta-refresh tag
-        assert fake_st.markdown.called
-        call_args = fake_st.markdown.call_args[0][0]
-        assert "meta" in call_args.lower() and "refresh" in call_args.lower()
+        # Sidebar warning shown, NO meta-refresh markdown injected.
+        assert fake_st.sidebar.warning.called
+        if fake_st.markdown.called:
+            for call in fake_st.markdown.call_args_list:
+                payload = call[0][0] if call[0] else ""
+                assert "http-equiv" not in payload.lower(), (
+                    "meta-refresh must NOT be injected — it triggers full page "
+                    "reload + widget state reset"
+                )
 
 
 # ---------------------------------------------------------------------------
